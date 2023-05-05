@@ -1,0 +1,164 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function converts accepted Estimate to Sales order automatically
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Estimate
+  Workflow Type        - Event Based
+  When Estimate is     - Created or Edited
+  Filter the triggers  - When Estimate Status is Accepted
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+estimateID = estimate.get("estimate_id");
+organizationID = organization.get("organization_id");
+customerID = estimate.get("customer_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
+
+estimateDetails = zoho.books.getRecordsByID("Estimates", organizationID, estimateID, "zbooks").get("estimate");
+isDiscountBeforeTax = estimateDetails.get("is_discount_before_tax");
+cpList = estimateDetails.get("contact_persons").toList();
+estimateNumber = estimateDetails.get("estimate_number");
+discountType = estimateDetails.get("discount_type");
+discount = estimateDetails.get("discount");
+shippingCharge = estimateDetails.get("shipping_charge");
+adjustment = estimateDetails.get("adjustment");
+salespersonID = estimateDetails.get("salesperson_id");
+lineItems = estimateDetails.get("line_items").toList();
+lineItemsList = List();
+
+for each item in lineItems
+{
+	itemCustomFields = item.get("item_custom_fields").toList();
+	itemCF = List();
+	
+  for each itemField in itemCustomFields
+	{
+		itemCFMap = Map();
+		itemCFMap.put("label", itemField.get("label"));
+		itemCFMap.put("value", itemField.get("value"));
+		itemCF.add(itemCFMap);
+	}
+	
+  item.remove("item_custom_fields");
+	item.remove("custom_field_hash");
+	item.remove("line_item_id");
+	item.put("item_custom_fields", itemCF);
+	lineItemsList.add(item);
+}
+
+salesOrderCustomFields = invokeurl
+[
+	url: apiUrl + "settings/fields?entity=salesorder&organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+salesOrderCustomFields = salesOrderCustomFields.get("fields").toList();
+
+estimateCustomFields = estimateDetails.get("custom_fields").toList();
+cfList = List();
+
+for each estimateField in estimateCustomFields
+{
+	estimateCF_isActive = estimateField.get("is_active");
+	estimateCF_dataType = estimateField.get("data_type");
+	estimateCF_label = estimateField.get("label");
+	estimateCF_value = estimateField.get("value");
+	
+  for each salesOrderField in salesOrderCustomFields
+	{
+		salesOrderCF_isActive = salesOrderField.get("is_active");
+		salesOrderCF_dataType = salesOrderField.get("data_type");
+		salesOrderCF_label = salesOrderField.get("field_name_formatted");
+		if(estimateCF_isActive && salesOrderCF_isActive 
+      && estimateCF_dataType == salesOrderCF_dataType 
+      && estimateCF_label == salesOrderCF_label 
+      && !estimateCF_value.isNull()
+    )
+		{
+			cMap = Map();
+			cMap.put("label", salesOrderCF_label);
+			cMap.put("value", estimateCF_value);
+			cfList.add(cMap);
+		}
+	}
+}
+
+json = Map();
+json.put("customer_id", customerID);
+json.put("estimate_id", estimateID);
+
+if(discountType == "entity_level")
+{
+	json.put("discount", discount);
+	json.put("is_discount_before_tax", isDiscountBeforeTax);
+	json.put("discount_type", "entity_level");
+}
+else if(discountType == "item_level")
+{
+	json.put("is_discount_before_tax", isDiscountBeforeTax);
+	json.put("discount_type", "item_level");
+}
+
+json.put("reference_number", estimateNumber);
+json.put("line_items", lineItemsList);
+
+if(!salespersonID.isNull())
+{
+	json.put("salesperson_id", salespersonID);
+}
+
+if(!cpList.isEmpty())
+{
+	json.put("contact_persons", cpList);
+}
+
+if(!cfList.isEmpty())
+{
+	json.put("custom_fields", cfList);
+}
+
+if(shippingCharge != 0)
+{
+	json.put("shipping_charge", shippingCharge);
+}
+
+if(adjustment != 0)
+{
+	json.put("adjustment", adjustment);
+}
+
+params = Map();
+params.put("JSONString", json);
+
+createSO = invokeurl
+[
+	url: apiUrl + "salesorders?organization_id=" + organizationID
+	type: POST
+	parameters: params
+	connection: "zbooks"
+];
+
+info createSO.get("message");
+
+soCode = createSO.get("code");
+if(soCode != 0)
+{
+	cmt = Map();
+	cmt.put("description", "Failed to create a salesorder");
+	cmtMap = Map();
+	cmtMap.put("JSONString", cmt);
+	comment = invokeurl
+	[
+		url: apiUrl + "estimates/" + estimateID + "/comments?organization_id=" + organizationID
+		type: POST
+		parameters: cmtMap
+		connection: "zbooks"
+	];
+	info "cmt==" + comment;
+}
