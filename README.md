@@ -12,4 +12,4 @@ Every business is unique and each of them follows a specific workflow. While man
 - Save the Custom function and you are good to go.
 
 ## Custom Functions
-1. [*Convert Estimate to Sales Order Automatically*]()
+1. [*Convert Estimate to Sales Order Automatically*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/convert_estimate_to_salesorder_automatically.ds)
