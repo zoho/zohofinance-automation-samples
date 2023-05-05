@@ -37,7 +37,7 @@ for each item in lineItems
 	itemCustomFields = item.get("item_custom_fields").toList();
 	itemCF = List();
 	
-  for each itemField in itemCustomFields
+  	for each itemField in itemCustomFields
 	{
 		itemCFMap = Map();
 		itemCFMap.put("label", itemField.get("label"));
@@ -45,7 +45,7 @@ for each item in lineItems
 		itemCF.add(itemCFMap);
 	}
 	
-  item.remove("item_custom_fields");
+  	item.remove("item_custom_fields");
 	item.remove("custom_field_hash");
 	item.remove("line_item_id");
 	item.put("item_custom_fields", itemCF);
@@ -70,16 +70,16 @@ for each estimateField in estimateCustomFields
 	estimateCF_label = estimateField.get("label");
 	estimateCF_value = estimateField.get("value");
 	
-  for each salesOrderField in salesOrderCustomFields
+     	for each salesOrderField in salesOrderCustomFields
 	{
 		salesOrderCF_isActive = salesOrderField.get("is_active");
 		salesOrderCF_dataType = salesOrderField.get("data_type");
 		salesOrderCF_label = salesOrderField.get("field_name_formatted");
 		if(estimateCF_isActive && salesOrderCF_isActive 
-      && estimateCF_dataType == salesOrderCF_dataType 
-      && estimateCF_label == salesOrderCF_label 
-      && !estimateCF_value.isNull()
-    )
+		  && estimateCF_dataType == salesOrderCF_dataType 
+      	 	  && estimateCF_label == salesOrderCF_label 
+      		  && !estimateCF_value.isNull()
+    		)
 		{
 			cMap = Map();
 			cMap.put("label", salesOrderCF_label);
