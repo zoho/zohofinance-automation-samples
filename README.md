@@ -13,3 +13,4 @@ Every business is unique and each of them follows a specific workflow. While man
 
 ## Custom Functions
 1. [*Convert Estimate to Sales Order Automatically*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/convert_estimate_to_salesorder_automatically.ds)
+2. [*Create a Deal in Zoho CRM when Estimate is created in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/create_deal_from_estimate_automatically.ds)
