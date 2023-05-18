@@ -1,0 +1,172 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function mandates reporting tags to be added while creating an Invoice in Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+  Create an Invoice level custom field with the same name as your reporting tag and update the "FIELD_NAME" variable below.
+
+  Module               - Invoice
+  Workflow Type        - Event Based
+  When Estimate is     - Created or Edited
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+FIELD_NAME = "cf_tags";    // Replace this with your custom field API name.
+
+invoiceID = invoice.get("invoice_id");
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
+
+fields = invokeurl
+[
+	url: apiUrl + "settings/fields?entity=invoice&organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+fields = fields.get("fields");
+
+fieldsMap = Map();
+tagList = List();
+
+for each field in fields
+{
+	fieldName = field.get("field_name");
+	if(fieldName.equalsIgnoreCase(FIELD_NAME))
+	{
+		fieldsMap.put(field.get("field_name"), field.get("field_name_formatted"));
+	}
+}
+
+invoiceDetails = invokeurl
+[
+	url :apiUrl + "invoices/" + invoiceID + "?organization_id=" + organizationID
+	type :GET
+	connection:"zbooks"
+];
+invoiceDetails = invoiceDetails.get("invoice");
+
+hashValue = invoiceDetails.get("custom_field_hash");
+relatedTagMap = Map();
+
+for each fieldTag in fieldsMap.keys()
+{
+	tagName = fieldsMap.get(fieldTag);
+	option = hashValue.get(fieldTag);
+	if(!option.isNull())
+	{
+		relatedTagMap.put(tagName, option);
+	}
+}
+
+tagIDVsOption = Map();
+
+if(relatedTagMap.keys().size() > 0)
+{
+	tagDetails = invokeurl
+	[
+		url: apiUrl + "settings/tags?usestate=false&organization_id=" + organizationID
+		type: GET
+		connection: "zbooks"
+	];
+	tagDetails = tagDetails.get("reporting_tags").toList();
+
+	for each tag in tagDetails
+	{
+		tagName = tag.get("tag_name");
+		rpTagName = relatedTagMap.get(tagName);
+
+		if(!rpTagName.isNull())
+		{
+			tagID = tag.get("tag_id");
+			tagIDVsOption.put(tagID, relatedTagMap.get(tagName));
+		}
+	}
+
+	if(tagIDVsOption.keys().size() > 0)
+	{
+		relatedTagIDs = Map();
+		
+    for each  tagID in tagIDVsOption.keys()
+		{
+			if(!tagID.isNull())
+			{
+				selectedTags = invokeurl
+				[
+					url: apiUrl + "settings/tags/" + tagID + "?organization_id=" + organizationID
+					type: GET
+					connection: "zbooks"
+				];
+				
+        selectedTags = selectedTags.get("reporting_tag");
+				tagOptionsList = selectedTags.get("tag_options").toList();
+				
+        for each  option in tagOptionsList
+				{
+					tagOption = option.get("tag_option_name").toString();
+					
+          if(tagOption.equalsIgnoreCase(tagIDVsOption.get(tagID)))
+					{
+						tagOptionID = option.get("tag_option_id");
+						relatedTagIDs.put(tagID, tagOptionID);
+						lineTagMap = Map();
+						lineTagMap.put("tag_id", tagID);
+						lineTagMap.put("tag_option_id", tagOptionID);
+						tagList.add(lineTagMap);
+					}
+				}
+			}
+		}
+
+		if(relatedTagIDs.keys().size() > 0)
+		{
+			lineItems = invoiceDetails.get("line_items").toList();
+			iList = List();
+			
+      for each item in lineItems
+			{
+				lineItemMap = Map();
+				lineItemID = item.get("line_item_id");
+				lineItemMap.put("line_item_id", lineItemID);
+				tags = List();
+				tags = item.get("tags").toList();
+				lineTagMap = Map();
+				lineTagMap.put("tag_id", tagID);
+				lineTagMap.put("tag_option_id", tagOptionID);
+				tags.add(lineTagMap);
+				tags.addAll(tagList);
+				lineItemMap.put("tags", tags);
+				iList.add(lineItemMap);
+			}
+			
+      json = Map();
+			json.put("line_items", iList);
+			json.put("customer_id", customerID);
+			json.put("reason", "Update Reporting Tag");
+			params = Map();
+			params.put("JSONString", json);
+			
+      updateInvoice = invokeurl
+			[
+				url: apiUrl + "invoices/" + invoiceID + "?organization_id=" + organizationID
+				type: PUT
+				parameters: params
+				connection: "zbooks"
+			];
+			info updateInvoice.get("message");
+		}
+		else
+		{
+			info "Tag details are empty";
+		}
+	}
+}
+else
+{
+	info "The custom fields are empty";
+}
