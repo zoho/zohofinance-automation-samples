@@ -1,0 +1,56 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function schedules customer statement to be sent automatically in Zoho Books.
+  
+  Create a customer level Custom field with the name "Statement Date" and datatype as "Date".
+  Enter the date from when you have to send the customer statement in the custom field.
+  If it is common for all customers, you can create the custom field with that value as a default value.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Customers
+  Workflow Type        - Date Based
+  Date of Execution    - 0 days after Statement Date
+  Filter the triggers  - (Optional)
+  Execution Time       - Enter a suitable time of your choice
+  Execution Cycle.     - Monthly 
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+customerID = customer.get("contact_id");
+customerName = customer.get("contact_name");
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+filter = "Status.Outstanding";
+end_date = zoho.currentdate.toString("yyyy-MM-dd");
+
+// Fetch the unpaid invoices list for the customer
+unpaidInvoicesList = invokeurl
+[
+	url: "https://www.zohoapis" + dc + "/books/v3/invoices?page=1&customer_id=" + customerID + "&status=unpaid&organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+
+// If the customer has one or more unpaid invoices, then send the statement to the customer
+unpaidInvoices = unpaidInvoicesList.get("invoices");
+if(unpaidInvoices.size() > 0)
+{
+	invoice = unpaidInvoices.get(unpaidInvoices.size() - 1);
+	invoiceDate = invoice.get("date");
+	start_date = invoiceDate.toString("yyyy-MM-dd");
+	sendStatement = invokeurl
+	[
+		url: "https://www.zohoapis" + dc + "/books/v3/contacts/" + customerID + "/statements/email?start_date=" + start_date + "&end_date=" + end_date + "&filter_by=" + filter + "&organization_id=" + organizationID
+		type: POST
+		connection: "zbooks"
+	];
+	info "Response: " + sendStatement;
+}
+else
+{
+	info "No unpaid invoices for this customer " + customerName;
+}
