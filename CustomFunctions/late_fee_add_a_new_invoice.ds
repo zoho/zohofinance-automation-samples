@@ -1,0 +1,102 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function schedules creates a new invoice for late fees automatically in Zoho Books.
+  
+  Create a Invoice level Custom field with the name "Late Fee Invoice" and datatype as "Checkbox".
+  
+  Copy the API Field Name of the custom field that you have created and update the value of the variable "LATEFEE_CF".
+  This function assumes 7.5% as default percentage for the late fee calculation. In case you want to change the percentage, you
+  can update the value of the "LATEFEE_PERCENT" variable with your desired value.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Workflow Name        - Enter a suitable name of your choice
+  Module               - Invoice
+  Workflow Type        - Date Based
+  Date of Execution    - 0 days after Due Date
+  Execution Time       - 00:00
+  Execution Cycle.     - Once
+  Filter the triggers  - When Status isn't Paid
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+LATEFEE_CF = "cf_late_fee_invoice";	  // Enter your API field Name here
+LATEFEE_PERCENT = 7.5;		            // Enter your Late Fee Percentage here
+
+invoiceID = invoice.get("invoice_id");
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+lateFeeAmount = invoice.get("sub_total").toDecimal() * LATEFEE_PERCENT / 100;
+invoiceNumber = invoice.get("invoice_number");
+
+accountsList = invokeUrl [
+    url: "https://books.zoho.com/api/v3/chartofaccounts?organization_id=" + organizationID
+    type: GET
+    connection: "zbooks"
+];
+chartOfAccounts = accountsList.get("chartofaccounts").toList();
+
+for each account in chartOfAccounts
+{
+	account_name = account.get("account_name");
+	if(account_name == "Other Charges")
+	{
+		accountID = account.get("account_id");
+	}
+}
+
+lineItem = List();
+itemMap = Map();
+itemMap.put("description", "Late fee for the Invoice#" + invoiceNumber);
+itemMap.put("rate", lateFeeAmount);
+itemMap.put("account_id",  accountID);
+lineItem.add(itemMap);
+
+cfList = List();
+cfMap = Map();
+cfMap.put("api_name", LATEFEE_CF);
+cfMap.put("value", "True");
+cfList.add(cfMap);
+
+json = Map();
+json.put("customer_id", customerID);
+json.put("line_items", lineItem);
+json.put("custom_fields", cfList);
+params = Map();
+params.put("JSONString", json);
+
+createInvoice = invokeUrl [
+    url: "https://books.zoho.com/api/v3/invoices?organization_id=" + organizationID
+    type: POST
+    parameters: params
+    connection: "zbooks"
+];
+
+success = createInvoice.get("code") == 0;
+createdInvoice = createInvoice.get("invoice");
+invoiceNumber = createdInvoice.get("invoice_number");
+
+if(success)
+{
+	invoiceDescription = "Late Fee Invoice has been created for Invoice#" + invoiceNumber;
+}
+else 
+{
+	invoiceDescription = "Late fee percentage field is empty. Late fee invoice has not been created";
+}
+
+cmt = Map();
+cmt.put("description", invoiceDescription);
+cmtMap = Map();
+cmtMap.put("JSONString", cmt);
+addComment = invokeUrl [
+	url: "https://books.zoho.com/api/v3/invoices/" + invoiceID + "/comments?organization_id=" + organizationID
+	type: POST
+	parameters: cmtMap
+	connection: "zbooks"
+];
+
+info addComment;
