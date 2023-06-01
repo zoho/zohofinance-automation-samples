@@ -16,3 +16,4 @@ Every business is unique and each of them follows a specific workflow. While man
 2. [*Create a Deal in Zoho CRM when Estimate is created in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/create_deal_from_estimate_automatically.ds)
 3. [*Make Reporting Tags mandatory in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/make_reporting_tags_mandatory.ds)
 4. [*Schedule Customer Statement in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_customer_statement.ds)
+5. [*Add Late fee by creating a New Invoice in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/late_fee_add_a_new_invoice.ds)
