@@ -1,0 +1,186 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function calculates Commission for the Salesperson and adds it as an Expense.
+  
+  Create a Invoice level Custom field with the name "Commission Percent" and datatype as "Percent".
+  
+  Copy the API Field Name of the custom field that you have created and update the value of the variable "CF_API_NAME".
+  If you want to change you paid through account, you can also do that by editing the variable "PAID_THROUGH_ACCOUNT_NAME".
+  Currently it is set to `Petty Cash`.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When Estimate is        - Created or Edited
+  Filter the triggers     - When Status is Paid
+  Everytime or Just Once  - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+CF_API_NAME = "cf_commission_percent";  // Replace the value with your custom field API Name
+PAID_THROUGH_ACCOUNT_NAME = "Petty Cash";  // Replace the value with your preferred paid through account
+
+invoiceNumber = invoice.get("invoice_number");
+invoiceID = invoice.get("invoice_id");
+orgID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
+accFlag = 0;
+
+invoiceDetails = invokeurl
+[
+	url : apiUrl + "invoices/" + invoiceID + "?organization_id=" + orgID
+	type : GET
+	connection : "zbooks"
+];
+invoiceDetails = invoiceDetails.get("invoice");
+
+total = invoiceDetails.get("bcy_total").toDecimal();
+salesPersonID = invoiceDetails.get("salesperson_id");
+customFields = invoiceDetails.get("custom_fields");
+salesPersonName = invoiceDetails.get("salesperson_name");
+
+for each cf in customFields
+{
+	placeHolder = cf.get("placeholder");
+	if(placeHolder == CF_API_NAME)
+	{
+		cfValue = cf.get("value").toDecimal();
+	}
+}
+
+if(salesPersonID != "")
+{
+	if(!cfValue.isNull() && cfValue != 0)
+	{
+		salesPersonCommissionAccount = salesPersonName + "_Commission Account";
+		percentValue = cfValue / 100;
+		commission = (total * percentValue).round(2);
+		info "Commission: " + commission;
+
+		if(commission != 0)
+		{
+			accountsList = invokeurl
+			[
+				url : apiUrl + "chartofaccounts?organization_id=" + orgID
+				type : GET
+				connection : "zbooks"
+			];
+			accounts = accountsList.get("chartofaccounts").toList();
+			
+			for each account in accounts
+			{
+				accountName = account.get("account_name");
+				if(accountName == salesPersonCommissionAccount)
+				{
+					accountID = account.get("account_id");
+					accFlag = 1;
+				}
+				if(accountName == PAID_THROUGH_ACCOUNT_NAME)
+				{
+					paidThroughAccountID = account.get("account_id");
+				}
+			}
+			
+			if(accFlag == 0)
+			{
+				accMap = Map();
+				accMap.put("account_name", salesPersonCommissionAccount);
+				accMap.put("account_type", "expense");
+				accMap.put("can_show_in_ze", true);
+				accParams = Map();
+				accParams.put("JSONString", accMap);
+				
+				createCommissionAccount = invokeurl
+				[
+					url : apiUrl + "chartofaccounts?organization_id=" + orgID
+					type : POST
+					parameters : accParams
+					connection : "zbooks"
+				];
+
+				if(createCommissionAccount.get("code") == 0)
+				{
+info "New Chart of Account has been created.";
+					createdAccountInfo = createCommissionAccount.get("chart_of_account");
+					accountID = createdAccountInfo.get("account_id");
+				}
+				else
+				{
+					info "Error in creating a new Chart of Account.";
+				}
+			}
+			else
+			{
+				info "Account exists. A new Chart of Account cannot be created.";
+			}
+			
+			jsonMap = Map();
+			jsonMap.put("account_id", accountID);
+			jsonMap.put("amount", commission);
+			jsonMap.put("paid_through_account_id", paidThroughAccountID);
+			itemsList = List();
+			itemMap = Map();
+			itemMap.put("amount", commission);
+			itemMap.put("account_id", accountID);
+			itemMap.put("description", "Commission Paid for the Salesperson " + salesPersonName);
+			itemsList.add(itemMap);
+			jsonMap.put("line_items", itemsList);
+			jsonMap.put("date", zoho.currentdate);
+			jsonMap.put("reference_number", invoiceNumber);
+			params = Map();
+			params.put("JSONString", jsonMap);
+			response = invokeurl
+			[
+				url : apiUrl + "expenses?organization_id=" + orgID
+				type : POST
+				parameters : params
+				connection : "zbooks"
+			];
+
+			if(response.get("code") == 0)
+			{
+				expenseDetails = response.get("expense");
+				expenseID = expenseDetails.get("expense_id");
+				comment = Map();
+				comment.put("description", "Expense #" + expenseID + " has been created.");
+				commentMap = Map();
+				commentMap.put("JSONString", comment);
+				addComment = invokeurl
+				[
+					url : apiUrl + "invoices/" + invoiceID + "/comments?organization_id=" + orgID
+					type : POST
+					parameters : commentMap
+					connection : "zbooks"
+				];
+			}
+		}
+		else
+		{
+			info "Commission is zero, cannot create an expense.";
+		}
+	}
+	else
+	{
+		info "Commission percent is zero or empty, cannot create an expense.";
+	}
+}
+else
+{
+	info "Sales person field is empty.";
+	comment = Map();
+	comment.put("description", "Sales person field is empty");
+	commentMap = Map();
+	commentMap.put("JSONString", comment);
+	addComment = invokeurl
+	[
+		url : apiUrl + "invoices/" + invoiceID + "/comments?organization_id=" + orgID
+		type : POST
+		parameters : commentMap
+		connection : "zbooks"
+	];
+}
