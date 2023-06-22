@@ -1,0 +1,83 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function automatically adds additional charges (like Credit card fees or Fuel surcharges) to customers on their Invoices in Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+  
+  Create a Customer level Custom field with the name "Charge Customer" and datatype as "Checkbox".
+  Check this option for all the customers whom you want to add additional charges.
+  
+  Enter the percentage, account name, tax name and the item name that you want on the invoice in the below script.
+
+  Module               - Invoice
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - When Charge Customer is True
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+SURCHARGE_PERCENTAGE = 3;          // Replace the value with your desired percentage
+ACCOUNT_NAME = "Credit Card Fee";	 // Enter your Account Name here
+TAX_NAME = "XXXX";                 // Enter your Tax Name here
+ITEM_NAME = "Credit Card Fee";     // Replace this with your requirement
+
+invoiceID = invoice.get("invoice_id");
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://books.zoho" + dc + "/api/v3/";
+invoiceDetails = zoho.books.getRecordsByID("invoices", organizationID, invoiceID, "zbooks").get("invoice");
+fee = invoice.get("sub_total").toDecimal() * (SURCHARGE_PERCENTAGE / 100);
+accountDetails = invokeurl
+[
+	url: apiUrl + "chartofaccounts?account_name_contains=" + encodeUrl(ACCOUNT_NAME) + "&organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+accounts = accountDetails.get("chartofaccounts");
+accountID = accounts.toMap().get("account_id");
+taxDetails = invokeurl
+[
+	url: apiUrl + "settings/taxes?organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+taxes = taxDetails.get("taxes").toList();
+
+for each tax in taxes
+{
+	taxName = tax.get("tax_name");
+	if(taxName.equalsIgnoreCase(TAX_NAME))
+	{
+		taxID = tax.get("tax_id");
+	}
+}
+
+lineItems = invoiceDetails.get("line_items").toList();
+iList = List();
+
+for each  item in lineItems
+{
+	iMap = Map();
+	lineItemID = item.get("line_item_id");
+	iMap.put("line_item_id", lineItemID);
+	iList.add(iMap);
+}
+
+pMap = Map();
+pMap.put("description", ITEM_NAME);
+pMap.put("rate", fee);
+pMap.put("tax_id", taxID);
+pMap.put("account_id", accountID);
+iList.add(pMap);
+
+json = Map();
+json.put("customer_id", customerID);
+json.put("line_items", iList);
+json.put("reason", "Surcharge has been added successfully");
+response = zoho.books.updateRecord("invoices", organizationID, invoiceID, json, "zbooks");
+
+info response.get("message");
