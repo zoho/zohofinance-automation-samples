@@ -9,7 +9,7 @@
 
   Module               - Invoice
   Workflow Type        - Event Based
-  When Estimate is     - Created or Edited
+  When Invoice is      - Created or Edited
   Filter the triggers  - (Optional)
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 
