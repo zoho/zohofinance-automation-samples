@@ -1,0 +1,95 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function carry forwards the attachments present in the Sales Order to Purchase Order when converted in Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module                     - Purchase Order
+  Workflow Type              - Event Based
+  When Purchase Order is     - Created
+  Filter the triggers        - (Optional)
+  Actions                    - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+purchaseorderID = purchaseorder.get("purchaseorder_id");
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+vendorID = purchaseorder.get("vendor_id");
+
+comments = invokeurl
+[
+	url: apiUrl + "/purchaseorders/" + purchaseorderID + "/comments?organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+comments = comments.get("comments");
+
+poDetails = invokeurl
+[
+	url: apiUrl + "/purchaseorders/" + purchaseorderID + "?organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+poDetails = poDetails.get("purchaseorder");
+
+poDocuments = poDetails.get("documents").toList();
+lineItems = poDetails.get("line_items").toList();
+
+docList = List();
+if(poDocuments.size() > 0)
+{
+	for each document in poDocuments
+	{
+		docMap = Map();
+		docMap.put("document_id", document.get("document_id"));
+		docList.add(docMap);
+	}
+}
+
+for each comment in comments
+{
+	transactionType = comment.get("transaction_type");
+	transactionID = comment.get("transaction_id");
+	if(transactionType == "salesorder" && !transactionID.isNull())
+	{
+		soDetails = invokeurl
+		[
+			url: apiUrl + "/salesorders/" + transactionID + "?organization_id=" + organizationID
+			type: GET
+			connection: "zbooks"
+		];
+		soDetails = soDetails.get("salesorder");
+		
+		
+if(!soDetails.isNull())
+		{
+			soDetails = soDetails.toMap();
+			documents = soDetails.get("documents");
+			if(documents.size() > 0)
+			{
+				for each document in documents
+				{
+					docMap = Map();
+					docMap.put("document_id", document.get("document_id"));
+					docList.add(docMap);
+				}
+			}
+		}
+	}
+}
+
+if(docList.size() > 0)
+{
+	json = Map();
+	json.put("vendor_id", vendorID);
+	json.put("documents", docList);
+	poUpdate = zoho.books.updateRecord("Purchaseorders", organizationID, purchaseorderID, json, "zbooks");
+	info poUpdate.get("message");
+}
+else
+{
+	info "Attachments are empty";
+}
