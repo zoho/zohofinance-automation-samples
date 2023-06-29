@@ -17,7 +17,7 @@
   Workflow Type        - Date Based
   Date of Execution    - 0 days after Due Date
   Execution Time       - 00:00
-  Execution Cycle.     - Once
+  Execution Cycle      - Once
   Filter the triggers  - When Status isn't Paid
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 
