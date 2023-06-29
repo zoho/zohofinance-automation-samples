@@ -20,3 +20,4 @@ Every business is unique and each of them follows a specific workflow. While man
 6. [*Calculate Commission for SalesPerson and add it as Expense in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/calculate_salesperson_commission_and_create_expense.ds)
 7. [*Fetch Deals field value from Zoho CRM to related Estimates in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/fetch_deals_field_value_in_related_estimates.ds)
 8. [*Add Additional Charges to Invoices in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/add_additional_charges_to_invoice.ds)
+9. [*Carry forward attachments from Sales order to Purchase order in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/carry_forward_attachments_so_to_po.ds)
