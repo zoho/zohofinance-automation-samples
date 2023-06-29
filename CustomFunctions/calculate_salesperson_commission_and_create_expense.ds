@@ -1,28 +1,28 @@
 /*
 
-  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
 	
   This custom function calculates Commission for the Salesperson and adds it as an Expense.
   
-  Create a Invoice level Custom field with the name "Commission Percent" and datatype as "Percent".
+  Create an Invoice level Custom field with the name "Commission Percent" and datatype as "Percent".
   
   Copy the API Field Name of the custom field that you have created and update the value of the variable "CF_API_NAME".
-  If you want to change you paid through account, you can also do that by editing the variable "PAID_THROUGH_ACCOUNT_NAME".
-  Currently it is set to `Petty Cash`.
+  If you want to change your paid-through account, you can also do that by editing the variable "PAID_THROUGH_ACCOUNT_NAME".
+  Currently, it is set to `Petty Cash`.
 
-  Create a connection by the name "zbooks" for Zoho Books service.
+  Create a connection by the name "zbooks" for the Zoho Books service.
 
   Module                  - Invoice
   Workflow Type           - Event Based
-  When Estimate is        - Created or Edited
+  When an Invoice is      - Created or Edited
   Filter the triggers     - When Status is Paid
-  Everytime or Just Once  - Just Once 
+  Every time or Just Once - Just Once 
   Actions                 - Type: Custom function; Name: Choose the custom function that you have created
 
 */
 
 CF_API_NAME = "cf_commission_percent";  // Replace the value with your custom field API Name
-PAID_THROUGH_ACCOUNT_NAME = "Petty Cash";  // Replace the value with your preferred paid through account
+PAID_THROUGH_ACCOUNT_NAME = "Petty Cash";  // Replace the value with your preferred paid-through account
 
 invoiceNumber = invoice.get("invoice_number");
 invoiceID = invoice.get("invoice_id");
