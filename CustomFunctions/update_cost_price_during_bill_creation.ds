@@ -11,7 +11,7 @@
 
   Module               - Bill
   Workflow Type        - Event Based
-  When an Item is      - Created or Edited
+  When a Bill is       - Created or Edited
   Filter the triggers  - (Optional)
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 
