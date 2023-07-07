@@ -1,0 +1,80 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function automatically updates the cost price of the item based on the price entered during bill creation in Zoho Books.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Create an Item level Custom field with the name "Update Cost Price" and the datatype as "Checkbox".
+  Check this option for all the items for which you want to update the price automatically.
+
+  Module               - Bill
+  Workflow Type        - Event Based
+  When an Item is      - Created or Edited
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+UPDATE_COST_PRICE_CUSTOM_FIELD = "Update Cost Price";  // Update your Custom field Name here
+
+billID = bill.get("bill_id");
+apiUrl = organization.get("api_root_endpoint");
+organizationID = organization.get("organization_id");
+info billID;
+
+bills = zoho.books.getRecordsByID("bills", organizationID, billID, "zbooks").get("bill");
+lineItems = bills.get("line_items");
+itemsList = List();
+
+for each item in lineItems
+{
+	itemID = item.get("item_id");
+	bcyRate = item.get("bcy_rate");
+	
+	if(itemID.isNull())
+	{
+		continue;
+	}
+	
+  customFields = zoho.books.getRecordsByID("items", organizationID, itemID, "zbooks").get("item").get("custom_fields");
+	info "Custom Fields: " + customFields;
+	
+	for each field in customFields
+	{
+		label = field.get("label");
+		
+	  if(label.equalsIgnoreCase(UPDATE_COST_PRICE_CUSTOM_FIELD))
+		{
+			canUpdatePrice = field.get("value");
+			info "Update Cost Price: " + canUpdatePrice;
+		}
+	}
+	
+	if(canUpdatePrice)
+	{
+		itemMap = Map();
+		itemMap.put("purchase_rate", bcyRate.round(2));
+		itemMap.put("item_id", itemID);
+		itemsList.add(itemMap);
+	}
+}
+
+if(itemsList.size() > 0)
+{
+	json = Map();
+	json.put("JSONString", itemsList);
+	result = invokeurl
+	[
+		url: apiUrl + "/items?organization_id=" + organizationID
+		type: PUT
+		parameters: json
+		connection: "zbooks"
+	];
+	info "Result: " + result;
+}
+else
+{
+	info "Cannot update items cost price.";
+}
