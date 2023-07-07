@@ -1,0 +1,78 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function automatically updates the selling price of the item based on the price entered during invoice creation in Zoho Books.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Create an Item level Custom field with the name "Update Selling Price" and the datatype as "Checkbox".
+  Check this option for all the items for which you want to update the price automatically.
+
+  Module               - Invoice
+  Workflow Type        - Event Based
+  When an Invoice is   - Created or Edited
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+UPDATE_SELLING_PRICE_CUSTOM_FIELD = "Update Selling Price";  // Update your Custom field Name here
+
+invoiceID = invoice.get("invoice_id");
+apiUrl = organization.get("api_root_endpoint");
+organizationID = organization.get("organization_id");
+info invoiceID;
+
+invoices = zoho.books.getRecordsByID("invoices", organizationID, invoiceID, "zbooks").get("invoice");
+lineItems = invoices.get("line_items");
+itemsList = List();
+
+for each item in lineItems
+{
+	itemID = item.get("item_id");
+	bcyRate = item.get("bcy_rate");
+	
+	if(itemID.isNull())
+	{
+		continue;
+	}
+	
+	customFields = zoho.books.getRecordsByID("items", organizationID, itemID, "zbooks").get("item").get("custom_fields");
+	info "Custom Fields: " + customFields;
+	
+	for each field in customFields
+	{
+		label = field.get("label");
+		if(label.equalsIgnoreCase(UPDATE_SELLING_PRICE_CUSTOM_FIELD))
+		{
+			canUpdatePrice = field.get("value");
+			info "Update Selling Price: " + canUpdatePrice;
+		}
+	}
+	
+	if(canUpdatePrice)
+	{
+		itemMap = Map();
+		itemMap.put("rate", bcyRate.round(2));
+		itemMap.put("item_id", itemID);
+		itemsList.add(itemMap);
+	}
+}
+if(itemsList.size() > 0)
+{
+	json = Map();
+	json.put("JSONString", itemsList);
+	result = invokeurl
+	[
+		url: apiUrl + "/items?organization_id=" + organizationID
+		type: PUT
+		parameters: json
+		connection: "zbooks"
+	];
+	info "Result: " + result;
+}
+else
+{
+	info "Cannot update items selling price.";
+}
