@@ -21,3 +21,5 @@ Every business is unique and each of them follows a specific workflow. While man
 7. [*Fetch Deals field value from Zoho CRM to related Estimates in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/fetch_deals_field_value_in_related_estimates.ds)
 8. [*Add Additional Charges to Invoices in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/add_additional_charges_to_invoice.ds)
 9. [*Carry forward attachments from Sales order to Purchase order in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/carry_forward_attachments_so_to_po.ds)
+10. a)[*Update Cost Price of an Item based on the value in the Bill in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_cost_price_during_bill_creation.ds)
+    b)[*Update Selling Price of an Item based on the value in the Invoice in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_selling_price_during_invoice_creation.ds)
