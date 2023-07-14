@@ -74,12 +74,12 @@ if(total > 0)
 				if(type == "customer_payment" || type == "retainer_payment")
 				{
 					  creditMap.put("payment_id", paymentID);
-            excessCreditsList.add(creditMap);
+            				  excessCreditsList.add(creditMap);
 				}
 				else if(type == "creditnote")
 				{
 					  creditMap.put("creditnote_id", paymentID);
-            creditNotesList.add(creditMap);
+           				  creditNotesList.add(creditMap);
 				}
 
 				if(invoiceTotal == 0)
