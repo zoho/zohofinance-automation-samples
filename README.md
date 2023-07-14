@@ -1,7 +1,7 @@
 # zohofinance-automation-samples
 A sample collection of custom functions to demonstrate the automation workflow in Zoho Books, a comprehensive cloud accounting platform that takes care of your business finance.
 
-Every business is unique and each of them follows a specific workflow. While managing your customers' transactions with Zoho, you might have some needs unique to your business. Custom Functions helps you address such needs. Here we have compiled a set of custom functions which addresses different needs.
+Every business is unique and each of them follows a specific workflow. While managing your customers' transactions with Zoho, you might have some needs unique to your business. Custom Functions help you address such needs. Here we have compiled a set of custom functions that address different needs.
 
 ## Custom Functions - Setup
 - In Zoho Books [*Web app*](https://books.zoho.com/), navigate to Settings -> Automation -> Custom Functions.
@@ -24,3 +24,4 @@ Every business is unique and each of them follows a specific workflow. While man
 10. a)[*Update Cost Price of an Item based on the value in the Bill in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_cost_price_during_bill_creation.ds)
 
     b)[*Update Selling Price of an Item based on the value in the Invoice in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_selling_price_during_invoice_creation.ds)
+11. [*Apply unused credits automatically to Invoice when created in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/apply_unused_credits_to_invoice.ds)
