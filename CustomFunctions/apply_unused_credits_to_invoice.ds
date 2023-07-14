@@ -1,0 +1,128 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function automatically applies unused credits from excess payments, credit notes, and retainer payments to an invoice when it is created.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoice
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+invoiceID = invoice.get("invoice_id");
+organizationID = organization.get("organization_id");
+total = invoice.get("balance");
+customerID = invoice.get("customer_id");
+apiUrl = organization.get("api_root_endpoint");
+
+invoiceDetails = invokeurl
+[
+	url: apiUrl + "/invoices/" + invoiceID + "?organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+invoiceDetails = invoiceDetails.get("invoice");
+branchID = invoiceDetails.get("branch_id");
+
+unusedCredits = invokeurl
+[
+	url: apiUrl + "/contacts/" + customerID + "/receivables/unusedcredits?include_unused_retainer_payments=true&organization_id=" + organizationID
+	type: GET
+	connection: "zbooks"
+];
+unusedCredits = unusedCredits.get("unused_credits_receivable");
+
+invoiceTotal = total.toDecimal();
+credits = unusedCredits.get("unapplied_amounts");
+canApplyCredits = false;
+
+if(total > 0)
+{
+	if(credits.size() > 0)
+	{
+		excessCreditsList = List();
+		creditNotesList = List();
+
+		for each credit in credits
+		{
+			creditBalance = credit.get("balance").toDecimal();
+			type = credit.get("entity_name");
+			paymentID = credit.get("entity_id");
+			creditBranchID = credit.get("branch_id");
+
+			if(creditBranchID == branchID)
+			{
+				if(invoiceTotal <= creditBalance)
+			    {
+					amountApplied = invoiceTotal;
+					invoiceTotal = 0;
+				}
+				else
+				{
+					invoiceTotal = invoiceTotal - creditBalance.toDecimal();
+					amountApplied = creditBalance;
+				}
+
+				 creditMap = Map();
+				 creditMap.put("amount_applied", amountApplied);
+
+				if(type == "customer_payment" || type == "retainer_payment")
+				{
+					  creditMap.put("payment_id", paymentID);
+            excessCreditsList.add(creditMap);
+				}
+				else if(type == "creditnote")
+				{
+					  creditMap.put("creditnote_id", paymentID);
+            creditNotesList.add(creditMap);
+				}
+
+				if(invoiceTotal == 0)
+			    {
+					break;
+				}
+			}
+		}
+	}
+	
+	json = Map();
+	if(creditNotesList.size() > 0)
+	{
+		json.put("apply_creditnotes", creditNotesList);
+		canApplyCredits = true;
+	}
+	
+	if(excessCreditsList.size() > 0)
+	{
+		json.put("invoice_payments", excessCreditsList);
+		canApplyCredits = true;
+	}
+	
+	if(canApplyCredits)
+	{
+		params = Map();
+		params.put("JSONString", json);
+		
+		applyCredits = invokeurl
+		[
+			url: apiUrl + "/invoices/" + invoiceID + "/credits?organization_id=" + organizationID
+			type: POST
+			parameters: params
+			connection: "zbooks"
+		];
+		info applyCredits.get("message");
+	}
+	else
+	{
+		info "There are no credits available.";
+	}
+}
+else
+{
+	info "Invoice has been paid already, cannot apply credits.";
+}
