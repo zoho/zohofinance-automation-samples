@@ -83,7 +83,7 @@ if(total > 0)
 				}
 
 				if(invoiceTotal == 0)
-			    {
+			    	{
 					break;
 				}
 			}
