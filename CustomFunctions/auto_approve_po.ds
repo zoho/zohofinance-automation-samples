@@ -1,0 +1,22 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function automatically approves purchase order with total less than or equal to 1000.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module                    - Purchase Order
+  Workflow Type             - Event Based
+  When a Purchase Order is  - Created
+  Filter the triggers       - Total <= 1000
+  Actions                   - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+purchaseorderID = purchaseorder.get("purchaseorder_id");
+organizationID = organization.get("organization_id");
+jsonString = Map();
+jsonString.put("next_action", "approve");
+approvePO = zoho.books.updateRecord("purchaseorders", organizationID, purchaseorderID, jsonString, "zbooks");
+info approvePO.get("message");
