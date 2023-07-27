@@ -1,0 +1,119 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function calculates the Margin and populate it in a custom field.
+  
+  Create a Sales Order level Custom field with the name "Total Margin" and datatype as "Decimal".
+  
+  Copy the API Field Name of the custom field that you have created and update the value of the variable "totalMarginPlaceholder".
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Sales Orders
+  Workflow Type           - Event Based
+  When an Sales Order is  - Created 
+  Filter the triggers     - (optional)
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+salesorderID = salesorder.get("salesorder_id");
+salesorderdate = salesorder.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = salesorder.get("customer_id");
+currencyID = salesorder.get("currency_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis"+dc+"/books/v3/";
+orgCurrencyID = organization.get("currency_id");
+
+totalMarginPlaceholder = "cf_total_margin";//Replace cf_total_margin with api name of the salesorder custom field.
+
+	if(currencyID != orgCurrencyID)
+	{
+		currentDate = zoho.currentdate;
+		currentDate = salesorderdate.toString("yyyy-MM-dd");
+		url = apiUrl+"settings/currencies/" + currencyID + "/exchangerates?from_date=" + currentDate + "&organization_id=" + organizationID;
+		exchangeRate = invokeurl
+		[
+			url :url
+			type :GET
+			connection:"zbooks"
+		];
+		exchangeRate = exchangeRate.get("exchange_rates").toMap();
+		exchangeRate = exchangeRate.get("rate").round(3);
+		exRate = exchangeRate.toDecimal();
+		exchangeFlag = true;
+	}
+salesorderUrl = apiUrl+"salesorders/editpage?salesorder_id=" + salesorderID + "&organization_id=" + organizationID;
+salesorderDetails = invokeurl
+[
+	url :salesorderUrl
+	type :GET
+	connection:"zbooks"
+];
+salesorderDetails = salesorderDetails.get("salesorder");
+lineItems = salesorderDetails.get("line_items").toList();
+totGmargin = 0;
+for each  findItem in lineItems
+{
+	perUnitDiscount = 0;
+	itemSellingPrice = 0;
+	itemPurchasePrice = 0;
+	discountAmt = 0;
+	gMargin = 0;
+	iMap = Map();
+	item = findItem.toMap();
+	itemID = item.get("item_id");
+	discount = findItem.get("discount");
+	discountAmt = findItem.get("discount_amount");
+	quantity = findItem.get("quantity").toDecimal();
+	if(discountAmt.isNull())
+	{
+		discountAmt = 0;
+	}
+	else
+	{
+		perUnitDiscount = discountAmt / quantity;
+		perUnitDiscount = perUnitDiscount.round(2);
+	}
+	if(exchangeFlag == true)
+			{
+				perUnitDiscount = perUnitDiscount * exRate;
+			}
+	getItemPurchasePrice = if(findItem.get("purchase_rate") != "",findItem.get("purchase_rate"),0);
+	unitSalesRate = findItem.get("bcy_rate").toDecimal();
+	if(getItemPurchasePrice.isNull())
+	{
+		unitPurchaseRate = 0;
+	}
+	else
+	{
+		unitPurchaseRate = getItemPurchasePrice.toDecimal();
+	}
+	unitMargin = unitSalesRate.toDecimal() - unitPurchaseRate;
+	unitMargin = unitMargin - perUnitDiscount;
+	totItemMargin = unitMargin * quantity;
+	totGmargin = totGmargin + totItemMargin;
+}
+cMap = Map();
+cList = List();
+cMap.put("api_name",totalMarginPlaceholder);
+cMap.put("value",totGmargin);
+cList.add(cMap);
+json = Map();
+json.put("custom_fields",cList);
+json.put("customer_id",customerID);
+json.put("reason","The custom field has been updated");
+params = Map();
+params.put("JSONString",json);
+updateUrl = apiUrl+"salesorders/" + salesorderID + "?organization_id=" + organizationID;
+updateRecord = invokeurl
+[
+	url :updateUrl
+	type :PUT
+	parameters:params
+	connection:"zbooks"
+];
+info updateRecord.get("message");
+info params;
