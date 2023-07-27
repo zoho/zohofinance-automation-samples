@@ -26,3 +26,4 @@ Every business is unique and each of them follows a specific workflow. While man
     b)[*Update Selling Price of an Item based on the value in the Invoice in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_selling_price_during_invoice_creation.ds)
 11. [*Apply unused credits automatically to Invoice when created in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/apply_unused_credits_to_invoice.ds)
 12. [*Auto Approve Purchase Order when total less than or equal to 1000 in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/auto_approve_po.ds)
+13.[*To Calculate Margin at transaction level*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/transaction_level_margin.ds)
