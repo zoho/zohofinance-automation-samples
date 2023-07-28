@@ -26,6 +26,7 @@ currencyID = salesorder.get("currency_id");
 dc = organization.get("data_center_extension");
 apiUrl = "https://www.zohoapis"+dc+"/books/v3/";
 orgCurrencyID = organization.get("currency_id");
+subTotal = salesorder.get("sub_total").toDecimal();
 
 totalMarginPlaceholder = "cf_total_margin";//Replace cf_total_margin with api name of the salesorder custom field.
 
@@ -95,6 +96,8 @@ for each  findItem in lineItems
 	unitMargin = unitMargin - perUnitDiscount;
 	totItemMargin = unitMargin * quantity;
 	totGmargin = totGmargin + totItemMargin;
+	totalProfitPer = ( totGmargin / subTotal) * 100;
+	
 }
 cMap = Map();
 cList = List();
