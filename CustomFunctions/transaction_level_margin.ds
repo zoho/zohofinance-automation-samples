@@ -102,7 +102,7 @@ for each  findItem in lineItems
 cMap = Map();
 cList = List();
 cMap.put("api_name",totalMarginPlaceholder);
-cMap.put("value",totGmargin);
+cMap.put("value",totalProfitPer);
 cList.add(cMap);
 json = Map();
 json.put("custom_fields",cList);
