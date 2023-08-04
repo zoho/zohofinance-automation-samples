@@ -6,7 +6,7 @@
     
   Copy the unique name of the cliq channel that you have created and update the value of the variable "channelUniqueName".
 
-  Create a connection by the name "zbooks" for the Zoho Books service and also create a connection by the name "zcliqq" for the Zoho Cliq service.
+  Create a connection by the name "zbooks" for the Zoho Books service and also create a connection by the name "zcliq" for the Zoho Cliq service.
   
   Frquency                - Daily
   Expires After           - Never expires
@@ -50,6 +50,6 @@ rep = invokeurl
 	url :"https://cliq.zoho.com/api/v2/channelsbyname/" + channelUniqueName + "/message"
 	type :POST
 	parameters:message.toMap() + ""
-	connection:"zcliqq"
+	connection:"zcliq"
 ];
 info rep;
