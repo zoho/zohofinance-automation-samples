@@ -24,7 +24,6 @@ draftInvs = invokeurl
 	type :GET
 	connection:"zbooks"
 ];
-info draftInvs;
 draftInvs = draftInvs.get("invoices");
 rows = List();
 msgHead = today.toText("'*for ' MMM dd, yy'*'");
