@@ -28,3 +28,4 @@ Every business is unique and each of them follows a specific workflow. While man
 12. [*Auto Approve Purchase Order when total less than or equal to 1000 in Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/auto_approve_po.ds)
 13. [*To Calculate Margin at transaction level*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/transaction_level_margin.ds)
 14. [*To send draft invoices to Cliq channel*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/draft_invoices_to_cliq.ds)
+15. [*Calculate related Sales Orders' shipping charge and add it to Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/calculate_total_shipping_charges.ds)
