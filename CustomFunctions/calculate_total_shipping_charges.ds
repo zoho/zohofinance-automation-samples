@@ -1,0 +1,43 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function calculates the sum of all related Sales Orders' shipping charged and display it in the Invoice in Zoho Books.
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When an Invoice is      - Created or Edited
+  Filter the triggers     - Status is Draft
+  Every time or Just Once - Every time
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+customerID = invoice.get("customer_id");
+organizationID = organization.get("organization_id");
+invoice = zoho.books.getRecordsByID("Invoices", organizationID, invoiceID).get("invoice");
+salesorders = invoice.get("salesorders");
+totalShippingCharge = 0;
+
+if(salesorders.size() > 0)
+{
+	for each salesorder in salesorders
+  {
+		salesorderID = salesorder.get("salesorder_id");
+		salesorderDetails = zoho.books.getRecordsByID("Salesorders", organizationID, salesorderID).get("salesorder");
+		shippingCharge = salesorderDetails.get("shipping_charge");
+		totalShippingCharge = totalShippingCharge + shippingCharge;
+  }
+}
+
+if(totalShippingCharge>0)
+{
+    params = Map();
+    params.put("shipping_charge", totalShippingCharge);
+    params.put("reason", "The shipping charge has been updated");
+    info params;
+    response = zoho.books.updateRecord("Invoices", organizationID, invoiceID, params);
+    info response.get("message");
+}
