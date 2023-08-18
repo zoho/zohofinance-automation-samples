@@ -1,0 +1,82 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+  
+  This custom function to fetch the attachment from Bill to the Invoice.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When an Sales Order is  - Created 
+  Filter the triggers     - (optional)
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+invoiceID = invoice.get("invoice_id");
+invoiceNumber = invoice.get("invoice_number");
+invoicedate = invoice.get("date").toDate();
+customerID = invoice.get("customer_id");
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
+cDate = zoho.currentdate;
+isFlag = false;
+invoiceDetail = invokeurl
+[
+	url :apiUrl + "invoices/" + invoiceID + "?organization_id=" + organizationID
+	type :GET
+	connection:"zbooks"
+];
+//info invoiceDetail;
+invoiceDetail = invoiceDetail.get("invoice");
+lineItems = invoiceDetail.get("line_items");
+documents = invoiceDetail.get("documents");
+for each  findbillid in lineItems
+{
+	billID = findbillid.get("bill_id");
+	if(!billID.isNull())
+	{
+		billDetail = invokeurl
+		[
+			url :apiUrl + "bills/" + billID + "?organization_id=" + organizationID
+			type :GET
+			connection:"zbooks"
+		];
+		billDetail = billDetail.get("bill");
+		attachmentName = billDetail.get("attachment_name");
+		documents = billDetail.get("documents").toList();
+		for each  find in documents
+		{
+			docsID = find.get("document_id");
+			if(!docsID.isNull())
+			{
+				isFlag = true;
+			}
+			docMap = Map();
+			docMap.put("document_id",docsID);
+			documents.add(docMap);
+		}
+	}
+}
+if(isFlag == true)
+{
+	json = Map();
+	json.put("reason","The files have been attached");
+	json.put("documents",documents);
+	params = Map();
+	params.put("JSONString",json);
+	updateDocuments = invokeurl
+	[
+		url :apiUrl + "invoices/" + invoiceID + "?organization_id=" + organizationID
+		type :PUT
+		parameters:params
+		connection:"zbooks"
+	];
+	info updateDocuments;
+}
+else
+{
+	info "There are no files have been found in the related bill or there are no bills have been associated to invoice#" + invoiceNumber;
+}
