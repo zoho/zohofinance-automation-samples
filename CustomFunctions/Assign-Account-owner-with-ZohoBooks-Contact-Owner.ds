@@ -1,0 +1,126 @@
+/*====================================================================
+This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+
+The workflow will set the contact or account owner of Zoho CRM with Zoho Books contact owner.
+
+Create a connection by the name "zbooks" for the Zoho Books service and also, create a connection by name "zcrm_connection" for Zoho CRM service.
+
+Create Worklflow as below
+
+Workflow name: Enter a suitable name of your choice  
+Module: Customers
+Workflow type: Event Based
+When a contact is :Created or Edited
+Filter the triggers: (Optional)
+Actions: Type: Custom function; Name: Enter the name of your choice.
+====================================================================*/
+
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+dc= organization.get("data_center_extension");
+url=apiUrl+"/crm/dashboard?from_crm=false&organization_id="+organizationID;
+response = invokeurl
+[
+	url: url
+	type: GET
+	connection: "zbooks"
+];
+//info response;
+if(response.get("code")==0)
+{
+entitytypeInfo=response.get("entitytype_info");
+//info entitytypeInfo;
+if(entitytypeInfo.size()>0)
+{
+	for each find in entitytypeInfo
+    {
+		entity=find.get("zb_entity");
+		if(entity.equalsIgnoreCase("contact"))
+		{
+			type=find.get("type");
+		}
+    }
+}
+if(type.equalsIgnoreCase("accounts_only"))
+{
+	crmModuleAPIName="Accounts";
+	crmModuleName="account";
+}
+else if(type.equalsIgnoreCase("contacts_only"))
+{
+	crmModuleAPIName="Contacts";
+	crmModuleName="contact";
+}
+else if(type.equalsIgnoreCase("accounts_and_its_contacts"))
+{
+	crmModuleAPIName="Acccounts";
+	crmModuleName="account";
+	
+}
+if(!crmModuleName.isNull())
+{
+	contactID=customer.get("contact_id");
+	customer=zoho.books.getRecordsByID("Contacts", organizationID, contactID,"zbooks").get("contact");
+	//info customer;
+	ownerID=customer.get("owner_id");
+	if(!ownerID.isNull())
+	{
+		
+	url=apiUrl+"/users/"+ownerID+"?organization_id="+organizationID;
+	response = invokeurl
+    [
+    	url: url
+    	type: GET
+    	connection: "zbooks"
+    ];
+	//info response;
+	email=response.get("user").get("email");
+	url="https://www.zohoapis"+dc+"/crm/v5/users/search?criteria=((email:equals:"+email+"))";
+	response = invokeurl
+    [
+    	url: url
+    	type: GET
+    	connection: "zcrm_connection"
+    ];
+	//info response;
+	users=response.get("users");
+	if(users.size()>0)
+	{
+		crmUserID=users.get(0).get("id");
+	if(!crmUserID.isNull())
+	{
+	zcrmAccountID=customer.get("zcrm_account_id");
+	zcrmContactID=customer.get("zcrm_contact_id");
+	if( !zcrmContactID.isNull()|| !zcrmAccountID.isNull())
+	{
+	if(crmModuleAPIName.equalsIgnoreCase("Accounts"))	
+	{
+		zcrmID=zcrmAccountID;
+	}
+	else if (crmModuleAPIName.equalsIgnoreCase("Contacts"))
+    {
+		zcrmID=zcrmContactID;
+    }
+	mp=Map();
+	json=Map();
+	json.put("owner_id",crmUserID);
+	idMap=Map();
+	idMap.put("id",crmUserID);
+	json.put("Owner",idMap);	
+	result=zoho.crm.updateRecord(crmModuleAPIName, zcrmID, json,mp,"zcrm_connection");
+	info result;
+	}
+	
+	}
+	}
+	else{
+		info "Could not find the user";
+	}
+	
+	}
+	
+}	
+}
+else{
+	info "Zoho CRM integration setting is not available";
+}
