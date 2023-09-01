@@ -31,3 +31,4 @@ Every business is unique and each of them follows a specific workflow. While man
 15. [*Calculate related Sales Orders' shipping charge and add it to Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/calculate_total_shipping_charges.ds)
 16. [*To Fetch attachment from Bill To Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Fetch-attachment-from-Bill-to-Invoice.ds)
 17. [*To assign Account owner with Zoho Books Contact owner*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Assign-Account-owner-with-ZohoBooks-Contact-Owner.ds)
+18. [*associate the templates automatically based on customer language*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/associate_template.ds)
