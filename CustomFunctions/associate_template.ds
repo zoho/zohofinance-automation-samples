@@ -11,6 +11,20 @@
   Filter the triggers  - (Optional)
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 */
+
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function will associate the templates automatically based on customer language. 
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Customers
+  Workflow Type        - Event Based
+  When Customer is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
 customerID = customer.get("contact_id");
 companyName = customer.get("company_name");
 organizationID = organization.get("organization_id");
@@ -18,42 +32,44 @@ supportedModules = ["invoice","salesorder","estimate","retainerinvoice","creditn
 conDetails = zoho.books.getRecordsByID("Contacts",organizationID,customerID,"zbooks").get("contact");
 language = conDetails.get("language_code_formatted");
 apiEndPoint = organization.get("api_root_endpoint");
-response = invokeUrl [
-	url : apiEndPoint + "/settings/emailtemplates?organization_id=" + organizationID
+response = invokeurl
+[
+	url :apiEndPoint + "/settings/emailtemplates?organization_id=" + organizationID
 	type :GET
 	connection:"zbooks"
 ];
 response = response.get("emailtemplates");
 templateMap = Map();
-for each find in response
+for each  find in response
 {
 	tempName = find.get("name");
 	type = find.get("type");
-	for each module in supportedModules
-    {
-		if ( type.equalsIgnoreCase(module + "_notification") && tempName.equalsIgnoreCase(language)) 
+	for each  module in supportedModules
+	{
+		if(type.equalsIgnoreCase(module + "_notification") && tempName.equalsIgnoreCase(language))
 		{
-			emailTempId = f.get("email_template_id");
-			templateMap.put(module + "_email_template_id", emailTempId);
+			emailTempId = find.get("email_template_id");
+			templateMap.put(module + "_email_template_id",emailTempId);
 		}
 	}
 }
-pdfTemp = invokeUrl [
-	url : apiEndPoint + "/settings/templates?organization_id=" + organizationID
+pdfTemp = invokeurl
+[
+	url :apiEndPoint + "/settings/templates?organization_id=" + organizationID
 	type :GET
 	connection:"zbooks"
 ];
 templates = pdfTemp.get("templates");
-for each temp in templates
+for each  temp in templates
 {
 	group = temp.get("template_group");
 	templateName = temp.get("template_name");
-	for each module in supportedModules
-    {
-		if ( group.equalsIgnoreCase(module) && templateName.equalsIgnoreCase(language)) 
+	for each  module in supportedModules
+	{
+		if(group.equalsIgnoreCase(module) && templateName.equalsIgnoreCase(language))
 		{
 			tempId = temp.get("template_id");
-			templateMap.put(module + "_template_id", tempId);
+			templateMap.put(module + "_template_id",tempId);
 		}
 	}
 }
