@@ -1,0 +1,103 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function will do the Custom calculation in item table of invoices.
+
+  Please ensure to replace[cf_days,cf_rate] item level custom field api names in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+daysPlaceholder = "cf_days";//Replace cf_days with API name of the item custom field 
+ratePlaceholder = "cf_rate";//Replace cf_rate with API name of the item custom field 
+invoiceDetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID).get("invoice");
+lineItems = invoiceDetails.get("line_items").toList();
+iList = List();
+for each  findItem in lineItems
+{
+	iMap = Map();
+	itemrateCalculation = 1;
+	noOfVal = 0;
+	uRate = 0;
+	totQTY = 0;
+	rate = findItem.get("rate").toDecimal();
+	quantity = findItem.get("quantity").toDecimal();
+	itemCFList = List();
+	itemCF = findItem.get("item_custom_fields").toList();
+	for each  findItemCF in itemCF
+	{
+		itemLab = findItemCF.get("label");
+		itemVal = findItemCF.get("value");
+		placeHolder = findItemCF.get("placeholder");
+		if(placeHolder == daysPlaceholder)
+		{
+			noOfVal = findItemCF.get("value").toDecimal();
+			totQTY = quantity * noOfVal;
+		}
+		else if(placeHolder == ratePlaceholder)
+		{
+			uRate = findItemCF.get("value").toDecimal();
+		}
+		itemMap = Map();
+		itemMap.put("api_name",placeHolder);
+		itemMap.put("value",itemVal);
+		itemCFList.add(itemMap);
+	}
+	itemMap = Map();
+	itemMap.put("api_name",ratePlaceholder);
+	if(!uRate.isNull() && uRate != 0)
+	{
+		itemMap.put("value",uRate);
+	}
+	else
+	{
+		itemMap.put("value",rate);
+	}
+	itemCFList.add(itemMap);
+	if(!noOfVal.isNull() && noOfVal != 0)
+	{
+		if(!uRate.isNull() && uRate != 0)
+		{
+			itemrateCalculation = uRate * noOfVal;
+		}
+		else
+		{
+			itemrateCalculation = rate * noOfVal;
+		}
+	}
+	else
+	{
+		if(!uRate.isNull() && uRate != 0)
+		{
+			itemrateCalculation = 1;
+			itemrateCalculation = itemrateCalculation * uRate;
+		}
+		else
+		{
+			itemrateCalculation = 1;
+			itemrateCalculation = itemrateCalculation * rate;
+		}
+	}
+	lineItemMap = Map();
+	lineItemMap.put("item_custom_fields",itemCFList);
+	lineItemMap.put("line_item_id",findItem.get("line_item_id"));
+	lineItemMap.put("rate",itemrateCalculation);
+	iList.add(lineItemMap);
+}
+json = Map();
+json.put("line_items",iList);
+json.put("customer_id",customerID);
+json.put("reason","Custom Calculation");
+updateInvoice = zoho.books.updateRecord("Invoices",organizationID,invoiceID,json);
+info updateInvoice.get("message");
+info json;
