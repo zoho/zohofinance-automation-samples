@@ -33,3 +33,4 @@ Every business is unique and each of them follows a specific workflow. While man
 17. [*To assign Account owner with Zoho Books Contact owner*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Assign-Account-owner-with-ZohoBooks-Contact-Owner.ds)
 18. [*Associate the templates automatically based on customer language*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/associate_template.ds)
 19. [*Associate the templates automatically based on branch*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/branch_based_template.ds)
+20. [*Custom calculation in item table of invoices*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Custom_Calculation.ds)
