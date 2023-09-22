@@ -1,0 +1,153 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+
+  This custom function will send the list of unpaid invoices automatically at the end of every week to the Customers
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Name: Enter a suitable name of your choice 
+  Frequency: Weekly/Daily
+  Start Date & Time: Enter a suitable time of your choice 
+  Expires After: Never Expires
+*/
+portalName = organization.get("portal_name");
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+apiUrl = organization.get("api_root_endpoint");
+companyname = organization.get("name");
+cDate = zoho.currentdate;
+iList = List();
+cList = List();
+page = 0;
+pageSize = 100;
+pageSize = pageSize - 1;
+pageList = "".rightpad(pageSize).replaceAll(" ",",").toList();
+for each  find in pageList
+{
+	page = page + 1;
+	url = apiUrl + "/invoices?page=" + page + "&per_page=200&filter_by=Status.Unpaid&sort_column=date&sort_order=D&organization_id=" + organizationID;
+	invoices = invokeurl
+	[
+		url :url
+		type :GET
+		connection:"zbooks"
+	];
+	invoices = invoices.get("invoices");
+	lSize = invoices.size();
+	if(lSize > 0)
+	{
+		for each  find in invoices
+		{
+			//info find;
+			dueDate = find.get("due_date").toDate();
+			invoiceDate = find.get("date").toDate();
+			NoOfdays = dueDate.daysbetween(cDate);
+			NoOfdays = NoOfdays.toDecimal();
+			iList.add(find);
+			customerID = find.get("customer_id");
+			check = cList.notContains(customerID);
+			//info check;
+			if(check == true)
+			{
+				cList.add(customerID);
+			}
+		}
+	}
+	else
+	{
+		break;
+	}
+}
+if(iList.size() > 0)
+{
+	customerCount = 0;
+	for each  customerID in cList
+	{
+		customerCount = customerCount + 1;
+		url = "https://postman-echo.com/delay/2";
+		delayResponseCall = invokeurl
+		[
+			url :url
+			type :GET
+		];
+		emails = List();
+		customerDetails = invokeurl
+		[
+			url :apiUrl + "/contacts/" + customerID + "?organization_id=" + organizationID
+			type :GET
+			connection:"zbooks"
+		];
+		customerDetails = customerDetails.get("contact");
+		contactCurrencyCode = customerDetails.get("currency_code");
+		contactName = customerDetails.get("contact_name");
+		contactPersons = customerDetails.get("contact_persons").toList();
+		for each  findCP in contactPersons
+		{
+			primaryContacts = findCP.get("is_primary_contact");
+			if(primaryContacts == true)
+			{
+				email = findCP.get("email");
+				if(!email.isNull())
+				{
+					emails.add(email);
+				}
+				break;
+			}
+		}
+		currencySymbol = customerDetails.get("currency_symbol");
+		companyname = organization.get("name");
+		receivableAmount = customerDetails.get("outstanding_receivable_amount").toDecimal();
+		user = zoho.adminuser;
+		st = "";
+		if(receivableAmount > 0)
+		{
+			endDate = zoho.currentdate;
+			st = "";
+			st = st + "<div style=\"background: #4CAF50;\"><div style=\"padding: 2% 3%;max-width: 150px;max-height:50px;\"></div></div><div style=\"padding:3%;text-align:center;background: #4CAF50;\"><div style=\"color:#fff;font-size:20px;font-weight:400;\">Unpaid Invoices<br>Up to " + endDate + "</div></div>";
+			st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"> <div style=\"padding: 30px 0; color: #555;line-height: 1.7;\">Hi " + contactName + ", <br><br>An overview of the unpaid invoice list is available below for your reference<br></div></div>";
+			st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"><table style=\"font-family:\"Trebuchet MS\", Arial, Helvetica, sans-serif; border-collapse: collapse;width: 100%;\"><tr style=\"nth-child(even){background-color: #f2f2f2;}\"><th style=\" border: 1px solid #ddd; padding: 8px; padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #4CAF50; color: white;border: 1px solid #ddd;padding: 8px;\">SR NO</th><th style=\"border: 1px solid #ddd; padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd;padding: 8px;\">Invoice Number</th><th style=\" border: 1px solid #ddd;padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd; padding: 8px;\">Status</th><th style=\" border: 1px solid #ddd; padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd;padding: 8px;\">Amount</th></tr>";
+			j = 1;
+			totAmount = 0;
+			customerInvList = List();
+			for each  inv in iList
+			{
+				//info inv;
+				cID = inv.get("customer_id");
+				if(cID == customerID)
+				{
+					customerInvList.add(inv);
+					dueDays = inv.get("due_days");
+					invoiceNO = inv.get("invoice_number");
+					pAmount = inv.get("balance");
+					//pAmount=contactCurrencyCode+""+pAmount;
+					st = st + "<tr><td style=\"border: 1px solid #ddd; padding: 8px;\">" + j + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + invoiceNO + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + dueDays + "</td><td style=\"border: 1px solid #ddd;padding: 8px;\">" + pAmount + "</td></tr>";
+					j = j + 1;
+					totAmount = totAmount + pAmount;
+				}
+			}
+			st = st + "</table>";
+			portalURL = "https://books.zoho" + dc + "/portal/" + portalName;
+			st = st + "<div style=\"text-align: center;margin: 25px 0;\"> <a style=\"text-decoration: none;\" href=" + portalURL + "> <span style=\"background-color:#4dcf59; border: 1px solid #49bd54; cursor: pointer; text-align: center; min-width: 140px; color: #fff; display: inline-block; text-decoration: none; padding: 10px 20px\">OPEN CLIENTPORTAL</span></a> </div></div>";
+			st = st + "<br><br><br></div><div style=\"padding:3%;text-align:center;background: #4CAF50;\"><div style=\"color:#fff;font-size:20px;font-weight:500;\">Total Unpaid Amount:" + totAmount + " " + contactCurrencyCode + "</div></div>";
+			st = st + "<br><br><br>Regards, <div style=\"color: #8c8c8c; font-weight: 400\"></div><div style=\"color: #b1b1b1\">" + companyname + "</div></div></div><br>";
+			if(!emails.isEmpty())
+			{
+				emails = emails.distinct();
+				sendmail
+				[
+					from :zoho.adminuserid
+					to :emails
+					subject :"Reminder for unpaid invoices"
+					message :st
+				]
+				msg = "The mail has been sent to " + emails;
+				sendCode = 0;
+			}
+			else
+			{
+				msg = "email id is empty,cannot send an email";
+				sendCode = 1;
+			}
+		}
+	}
+}
