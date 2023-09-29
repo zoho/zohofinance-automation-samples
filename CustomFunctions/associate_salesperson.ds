@@ -1,0 +1,85 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function will associate Sales person automatically based on the custom field at contact level when an invoice is created. 
+
+  Please ensure to replace cf_salesperson with contact level custom field api name in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+dc = organization.get("data_center_extension");
+cfPlaceholder="cf_salesperson";//Replace cf_salesperson with api name of the custom field
+apiUrl=organization.get("api_root_endpoint");
+contactDetails = invokeurl
+[
+	url :apiUrl+"/contacts/" + customerID + "?organization_id=" + organizationID
+	type :GET
+	connection:"zbooks"
+];
+contactDetails = contactDetails.get("contact");
+contactCustomFields = contactDetails.get("custom_fields").toList();
+for each  find in contactCustomFields
+{
+	placeholder=find.get("placeholder");
+	if(placeholder.equalsIgnoreCase(cfPlaceholder))
+	{
+		salesperson = find.get("value");
+		break;
+	}
+}
+if(!salesperson.isNull())
+{
+	getsalesPersons = invokeurl
+	[
+		url :apiUrl+"/salespersons?organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	getsalesPersons = getsalesPersons.get("data").toList();
+	for each  findSalesP in getsalesPersons
+	{
+		salespersonEmail = findSalesP.get("salesperson_email");
+		salespersonName = findSalesP.get("salesperson_name");
+		if(salespersonEmail == salesperson || salespersonName == salesperson)
+		{
+			salespersonID = findSalesP.get("salesperson_id");
+			break;
+		}
+	}
+	if(!salespersonID.isNull())
+	{
+		json = Map();
+		json.put("customer_id",customerID);
+		json.put("salesperson_id",salespersonID);
+		json.put("reason","Salesperson name has been associated");
+		params = Map();
+		params.put("JSONString",json);
+		result = invokeurl
+		[
+			url :apiUrl+"/invoices/" + invoiceID + "?organization_id=" + organizationID
+			type :PUT
+			parameters:params
+			connection:"zbooks"
+		];
+		info result.get("message");
+		info params;
+	}
+	else
+	{
+		info "There are no salesperson exists";
+	}
+}
+else
+{
+	info "Could not find the salesperon in the custom field";
+}
