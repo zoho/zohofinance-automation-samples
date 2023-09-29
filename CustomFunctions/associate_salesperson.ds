@@ -81,5 +81,5 @@ if(!salesperson.isNull())
 }
 else
 {
-	info "Could not find the salesperon in the custom field";
+	info "Could not find the salesperson";
 }
