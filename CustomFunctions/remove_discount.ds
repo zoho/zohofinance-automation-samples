@@ -1,0 +1,91 @@
+/*
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function will remove the discount when an invoice is over due in Zoho books.
+  
+  Kindly replace 188914XXXXXXXXXX013 with Email Template Id.
+  
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Workflow Name        - Enter a suitable name of your choice
+  Module               - Invoice
+  Workflow Type        - Date Based
+  Date of Execution    - 0 days after Due Date
+  Execution Time       - 00:00
+  Execution Cycle      - Once
+  Filter the triggers  - When Status isn't Paid
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+emailTemplateId = "188914XXXXXXXXXX013";
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+invoiceDetails = zoho.books.getRecordsByID("invoices",organizationID,invoiceID,"zbooks").get("invoice");
+discountType = invoiceDetails.get("discount_type");
+lineitems = invoiceDetails.get("line_items").toList();
+iList = List();
+for each  find in lineitems
+{
+	imap = Map();
+	lineID = find.get("line_item_id");
+	imap.put("discount",0);
+	imap.put("line_item_id",lineID);
+	iList.add(imap);
+}
+json = Map();
+json.put("customer_id",customerID);
+json.put("reason","over duedate exceeds");
+if ( discountType.equalsIgnoreCase("item_level") ) 
+{
+	json.put("line_items",iList);
+}
+else 
+{
+	json.put("discount", 0);
+}
+update = zoho.books.updateRecord("invoices",organizationID,invoiceID,json,"zbooks");
+info update.get("message");
+info json;
+code = update.get("code");
+if ( code == 0 ) 
+{
+	updatedInvoiceId = update.get("invoice").get("invoice_id");
+	apiEndPoint = organization.get("api_root_endpoint");
+	contactDetails = zoho.books.getRecordsByID("contacts", organizationID, customerID,"zbooks").get("contact");
+	contactPersons = contactDetails.get("contact_persons").toList();
+	for each  findCP in contactPersons
+	{
+		primaryContacts = findCP.get("is_primary_contact");
+		if(primaryContacts == true)
+		{
+			email = findCP.get("email");
+		}
+	}
+	gettemp = invokeurl
+	[
+		url : apiEndPoint +"/invoices/"+updatedInvoiceId+"/email?email_template_id="+emailTemplateId+"&organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	body = gettemp.get("data").get("body");
+	subject = gettemp.get("data").get("subject");
+	json = Map();
+	tlist = List();
+	tlist.add(email);
+	json.put("to_mail_ids",tlist);
+	json.put("subject",subject);
+	json.put("body",body);
+	params = Map();
+	params.put("JSONString",json);
+	params.put("attach_pdf",true);
+	email_resp = invokeurl
+	[
+	url : apiEndPoint + "/invoices/" + updatedInvoiceId + "/email?organization_id=" + organizationID
+	type :POST
+	parameters:params
+	connection:"zbooks"
+	];
+	info email_resp;
+}
