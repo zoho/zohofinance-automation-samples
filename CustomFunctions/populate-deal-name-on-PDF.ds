@@ -1,0 +1,36 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This workflow will populate the Deal name in a Custom field. 
+
+  Please ensure to replace 'cf_deal_name' with 
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Estimate
+  Workflow Type           - Event Based
+  When an Invoice is      - Created
+  Every time or Just Once - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+estimateFieldApiName = "cf_deal_name";//Replace cf_deal_name with Estimate level custom field api name.
+estimateID = estimate.get("estimate_id");
+estimatedate = estimate.get("date").toDate();
+organizationID = organization.get("organization_id");
+estDetails = zoho.books.getRecordsByID("estimates",organizationID,estimateID,"zbooks").get("estimate");
+DealName = estDetails.get("zcrm_potential_name");
+if(!DealName.isNull())
+{
+	cMap = Map();
+	cMap.put("api_name",estimateFieldApiName);
+	cMap.put("value",DealName);
+	cList = List();
+	cList.add(cMap);
+	json = Map();
+	json.put("custom_fields",cList);
+	update = zoho.books.updateRecord("estimates",organizationID,estimateID,json,"zbooks");
+	info update.get("message");
+	info json;
+}
