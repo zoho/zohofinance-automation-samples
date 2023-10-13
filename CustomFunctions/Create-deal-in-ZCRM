@@ -1,0 +1,70 @@
+
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This workflow will create a deal in ZCRM when an estimate is created in Zoho Books.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Estimate
+  Workflow Type           - Event Based
+  When an Invoice is      - Created
+  Every time or Just Once - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+estimateID = estimate.get("estimate_id");
+estimatedate = estimate.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = estimate.get("customer_id");
+total = estimate.get("total");
+customerDetails = zoho.books.getRecordsByID("Contacts",organizationID,customerID,"zbooks").get("contact");
+zcrmAccountID = customerDetails.get("zcrm_account_id");
+zcrmContactID = customerDetails.get("zcrm_contact_id");
+estimateDetails = zoho.books.getRecordsByID("Estimates",organizationID,estimateID,"zbooks").get("estimate");
+estimate_number = estimateDetails.get("estimate_number");
+expiry_date = estimateDetails.get("expiry_date");
+if(expiry_date.isNull())
+{
+	expiry_date = estimatedate.addDay(10);
+	expiry_date = expiry_date.toDate();
+}
+else
+{
+	expiry_date = expiry_date.toDate();
+}
+if(!zcrmAccountID.isNull() || !zcrmContactID.isNull())
+{
+	mp = Map();
+	timeVar = now;
+	timeVar = timeVar.toString("yyyy-MM-dd-HH-mm-ss");
+	timeVar = timeVar.remove("-");
+	mp.put("Deal_Name","Deal - " + estimate_number);
+	mp.put("Stage","Proposal/Price Quote");
+	mp.put("Closing_Date",expiry_date);
+	contactName = estimate.get("customer_name");
+	mp.put("id",customerID);
+	mp.put("Contact_Name",zcrmContactID);
+	mp.put("Account_Name",zcrmAccountID);
+	mp.put("Amount",total);
+	mp.put("Quotation",estimate_number);
+	mp.put("Quotation_Date",estimatedate);
+	mp1 = Map();
+	createdDeal = zoho.crm.createRecord("Deals",mp,mp1,"crm");
+	info createdDeal;
+	dealID = createdDeal.get("id");
+	info zoho.crm.getRecordById("Deals",dealID);
+	if(!dealID.isNull())
+	{
+		json = Map();
+		json.put("customer_id",customerID);
+		json.put("zcrm_potential_id",dealID);
+		updateEstimate = zoho.books.updateRecord("Estimates",organizationID,estimateID,json,"zbooks");
+		info updateEstimate.get("message");
+	}
+}
+else
+{
+	info "Cannot create a Deal in CRM";
+}
