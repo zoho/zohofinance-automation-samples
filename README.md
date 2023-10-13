@@ -37,5 +37,5 @@ Every business is unique and each of them follows a specific workflow. While man
 21. [*To send unpaid invoices[consolidated] to customers*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/send_unpaidinvoices%5Bconsolidated%5D_to_customers.ds)
 22. [*To automatically associated Sales Person*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/associate_salesperson.ds)
 23. [*To remove discount when an invoice is over due*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/remove_discount.ds)
-24. [*To Fetch attachment from Zoho Finance Module of ZCRM*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/fetch-attachment-from-ZCRM.ds)
+24. [*To Create a Deal in ZCRM When an Estimate is created in Zoho Boooks*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Create-deal-in-ZCRM.ds)
 
