@@ -1,0 +1,57 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This function will fetch the attachment from the invoice is created in Zoho CRM(finance module) and attach the same in the invoice is created in Zoho Books.  
+
+  Ensure to replace invoice_MODULE_NAME_OF_CRM with module name of invoice in CRM. 
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When an Invoice is      - Created
+  Every time or Just Once - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+moduleName = "<INVOICE_MODULE_NAME_OF_CRM>";
+invoiceID = invoice.get("invoice_id");
+invoiceNumber = invoice.get("invoice_number");
+relatedrecords = zoho.crm.searchRecords(moduleName,"(Name:equals:" + encodeUrl(invoiceNumber) + ")");
+crminvoiceId = relatedrecords.toMap().get("id");
+response = invokeurl
+[
+	url: "https://www.zohoapis"+dc+"/crm/v4/"+moduleName+"/"+crminvoiceId+"/Attachments?fields=id,Owner,File_Name,Created_Time,Parent_Id"
+	type: GET
+	connection:"crmconnection"
+];
+datas = response.get("data");
+files = List();
+for each file in datas
+{
+	fileId = file.get("id");
+	files.add(fileId);
+}
+for each file in files
+{
+	response1 = invokeurl
+	[
+		url: "https://www.zohoapis"+dc+"/crm/v4/"+moduleName+"/"+crminvoiceId+"/Attachments/"+ file
+		type: GET
+		connection:"crmconnection"
+	];
+	info response1;
+	response1.setParamName("attachment");
+	url = "https://www.zohoapis"+dc+"/api/v3/invoices/" + invoiceID + "/attachment?organization_id=" + organizationID;
+	attach = invokeurl
+	[
+		url :url
+		type :POST
+		connection:"zbooks"
+		files:response1 
+	];
+	info attach;
+}
