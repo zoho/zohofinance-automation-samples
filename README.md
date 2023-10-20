@@ -38,4 +38,4 @@ Every business is unique and each of them follows a specific workflow. While man
 22. [*To automatically associated Sales Person*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/associate_salesperson.ds)
 23. [*To remove discount when an invoice is over due*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/remove_discount.ds)
 24. [*To populate deal name on Estimate PDF*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/populate-deal-name-on-PDF.ds)
-
+25. [*To create PO From SO(based on Preferred vendor)*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Create-PO-From-SO.ds)
