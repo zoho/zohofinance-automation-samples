@@ -2,6 +2,8 @@
   This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
 	
   This Custom Function will create PO based on Preferred vendor.
+
+  Ensure to replace cf_create_po with item level custom field api name in the script.
   
   Create a connection by the name "zbooks" for Zoho Books service.
 
@@ -15,14 +17,15 @@ salesorderID = salesorder.get("salesorder_id");
 salesorderNumber = salesorder.get("salesorder_number");
 salesorderdate = salesorder.get("date").toDate();
 organizationID = organization.get("organization_id");
-apiUrl = organization.get("api_root_endpoint");
+apiUrl= organization.get("api_root_endpoint");
+cfItemPlaceholder="cf_create_po";//Replace cf_create_po with api name of the item custom field
 cDate = zoho.currentdate;
-salesorder = zoho.books.getRecordsByID("Salesorders",organizationID,salesorderID,"zbooks").get("salesorder");
+salesorder=zoho.books.getRecordsByID("Salesorders", organizationID, salesorderID,"zbooks").get("salesorder");
 customFields = salesorder.get("custom_fields");
 cfList = List();
 if(!customFields.isNull())
 {
-	url = apiUrl + "/settings/fields?entity=purchaseorder&organization_id=" + organizationID;
+	url = apiUrl+"/settings/fields?entity=purchaseorder&organization_id=" + organizationID;
 	getpurchaseorderCustomFields = invokeurl
 	[
 		url :url
@@ -48,22 +51,33 @@ if(!customFields.isNull())
 				cMap = Map();
 				cMap.put("label",purchaseorder_label);
 				cMap.put("value",parentCF_value);
+				
 				cfList.add(cMap);
 			}
 		}
 	}
-}
-lineItems = salesorder.get("line_items");
+	}
+lineItems=salesorder.get("line_items");
 batchValue = 100;
 indexValue = 1;
-preferredVendorMap = Map();
-bulkItemListCategory = Map();
-bulkItemList = List();
-serviceOrNonPreferredItemMap = Map();
-for each  item in lineItems
+preferredVendorMap=Map();
+bulkItemListCategory=Map();
+bulkItemList=List();
+serviceOrNonPreferredItemMap=Map();
+for each item in lineItems
 {
-	itemID = item.get("item_id");
-	if(!itemID.isNull())
+	isChecked=false;
+	itemID=item.get("item_id");
+	itemCF=item.get("item_custom_fields");
+	for each field in itemCF
+    {
+		placeHolder=field.get("placeholder");
+		if(placeHolder.equalsIgnoreCase(cfItemPlaceholder))
+		{
+			isChecked=field.get("value");
+		}
+    }
+	if(!itemID.isNull()&& isChecked=true)
 	{
 		if(!bulkItemListCategory.get(indexValue).isNull())
 		{
@@ -87,100 +101,116 @@ for each  item in lineItems
 			bulkItemListCategory.put(indexValue,bulkItemList);
 		}
 	}
+	
 }
 //info bulkItemListCategory;
-if(bulkItemListCategory.keys().size() > 0)
+if(bulkItemListCategory.keys().size()>0)
 {
-	for each  record in bulkItemListCategory.keys()
-	{
-		itemList = bulkItemListCategory.get(record);
-		itemList = itemList.distinct();
-		url = apiUrl + "/itemdetails?item_ids=" + itemList + "&organization_id=" + organizationID;
-		info url;
-		response = invokeurl
-		[
-			url :url
-			type :GET
-			connection:"zbooks"
-		];
-		//info response;
-		items = response.get("items");
-		if(items.size() > 0)
-		{
-			for each  product in items
-			{
-				produtctID = product.get("item_id");
-				vendorID = product.get("vendor_id");
-				preferredVendorMap.put(produtctID,vendorID);
-			}
-		}
-	}
+	for each record in bulkItemListCategory.keys()
+    {
+		itemList=bulkItemListCategory.get(record);
+		itemList=itemList.distinct();
+		url = apiUrl+"/itemdetails?item_ids=" + itemList + "&organization_id="+organizationID;
+info url;
+response = invokeurl
+[
+	url: url
+	type: GET
+	connection: "zbooks"
+];
+//info response;
+items=response.get("items");
+if(items.size()>0)
+{
+	for each product in items
+    {
+		produtctID=product.get("item_id");
+		vendorID=product.get("vendor_id");
+		preferredVendorMap.put(produtctID,vendorID);
+    }
+}
+	
+    }
 }
 //info preferredVendorMap;
-if(preferredVendorMap.keys().size() > 0)
+if(preferredVendorMap.keys().size()>0)
 {
-	poCategoryMap = Map();
-	for each  item in lineItems
-	{
-		itemID = item.get("item_id");
-		qty = item.get("quantity");
-		lineItemID = item.get("line_item_id");
-		type = item.get("product_type");
-		headerName = item.get("header_name");
-		if(!itemID.isNull())
+	
+poCategoryMap=Map();	
+	
+for each item in lineItems
+{
+	
+	itemID=item.get("item_id");
+	qty=item.get("quantity");
+	lineItemID=item.get("line_item_id");
+	type=item.get("product_type");
+	headerName=item.get("header_name");
+	isChecked=false;
+	itemCF=item.get("item_custom_fields");
+	for each field in itemCF
+    {
+		placeHolder=field.get("placeholder");
+		if(placeHolder.equalsIgnoreCase(cfItemPlaceholder))
 		{
-			vendorID = preferredVendorMap.get(itemID);
-			if(!vendorID.isNull())
-			{
-				iList = List();
-				if(!poCategoryMap.get(vendorID).isNull())
-				{
-					pList = poCategoryMap.get(vendorID);
-					productMap = Map();
-					productMap.put("item_id",itemID);
-					productMap.put("salesorder_item_id",lineItemID);
-					productMap.put("quantity",qty);
-					//	productMap.put("header_name",headerName);
-					iList.add(productMap);
-					iList.addAll(pList);
-					poCategoryMap.put(vendorID,iList);
-				}
-				else
-				{
-					iList = List();
-					productMap = Map();
-					productMap.put("item_id",itemID);
-					productMap.put("salesorder_item_id",lineItemID);
-					productMap.put("quantity",qty);
-					//productMap.put("header_name",headerName);						
-					iList.add(productMap);
-					poCategoryMap.put(vendorID,iList);
-				}
-			}
-			else
-			{
-				serviceOrNonPreferredItemMap.put(itemID,"Preferred vendor field is empty");
-			}
+			isChecked=field.get("value");
+		}
+    }
+	if(!itemID.isNull()&& isChecked=true)
+	{
+		vendorID=preferredVendorMap.get(itemID);
+		if(!vendorID.isNull())
+		{
+		iList=List();
+		if(!poCategoryMap.get(vendorID).isNull())
+		{
+			pList=poCategoryMap.get(vendorID);
+			productMap=Map();
+			productMap.put("item_id",itemID);
+			productMap.put("salesorder_item_id",lineItemID);
+			productMap.put("quantity",qty);
+		  		
+			iList.add(productMap);
+			iList.addAll(pList);
+			poCategoryMap.put(vendorID,iList);
 		}
 		else
 		{
-			serviceOrNonPreferredItemMap.put(itemID,"item id is empty(Service item)");
+			iList=List();
+			productMap=Map();
+			productMap.put("item_id",itemID);
+			productMap.put("salesorder_item_id",lineItemID);
+			productMap.put("quantity",qty);
+				
+			iList.add(productMap);
+			poCategoryMap.put(vendorID,iList);
+		}
+		}
+		else{
+			serviceOrNonPreferredItemMap.put(itemID,"Preferred vendor field is empty");
 		}
 	}
-	//info poCategoryMap;
-	if(poCategoryMap.keys().size() > 0)
-	{
-		for each  vendor in poCategoryMap.keys()
-		{
-			productsList = poCategoryMap.get(vendor);
+	else{
+		serviceOrNonPreferredItemMap.put(itemID,"item id is empty(Service item) or the check box is not selected");
+	}
+	}
+//info poCategoryMap;
+if(poCategoryMap.keys().size()>0)
+{
+	
+	for each vendor in poCategoryMap.keys()
+    {
+		productsList=poCategoryMap.get(vendor);
 			params = Map();
 			params.put("vendor_id",vendor);
 			params.put("line_items",productsList);
 			params.put("custom_fields",cfList);
 			params.put("salesorder_id",salesorderID);
 			params.put("reference_number",salesorderNumber);
+			info params;
 			json = Map();
 			json.put("JSONString",params);
+			
 			createRecords = invokeurl
 			[
 				url :apiUrl + "/purchaseorders?organization_id=" + organizationID
@@ -188,16 +218,17 @@ if(preferredVendorMap.keys().size() > 0)
 				parameters:json
 				connection:"zbooks"
 			];
-			info createRecords.get("message");
-		}
-	}
+			info createRecords.get("message");		
+    }	
+}	
 }
-else
-{
-	info "Preferred vendor field is empty for all items";
+else{
+	info "Preferred vendor field is empty for all items or the checkbox is not selected at the line item level";
 }
+
 if(!serviceOrNonPreferredItemMap.isNull())
 {
-	info "*********Preferred vendor field is empty for the below items**************";
-	info serviceOrNonPreferredItemMap;
+
+info "*********Preferred vendor field is empty or the checkbox is not selected for the below items**************";
+info serviceOrNonPreferredItemMap; 
 }
