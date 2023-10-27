@@ -1,0 +1,42 @@
+/*
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This workflow will update the related deals's stage when an invoice is paid in Zoho Books.
+  
+  Create a connection by the name "zbooks" for the Zoho Books service and also create a connection for ZCRM by the name "zcrm_connection".
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When an Invoice is      - Created or Edited(When any field is updated)
+  Filter the triggers     - When Status is Paid
+  Every time or Just Once - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+CustomerID = invoice.get("customer_id");
+organizationID = organization.get("organization_id");
+invDetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID,"zbooks").get("invoice");
+status = invDetails.get("status");
+crmID = invDetails.get("zcrm_potential_id");
+info crmID;
+crmStage="paid";
+if(crmID != "")
+{
+if(status=="paid")
+{
+	details = Map();	
+	details.put("Stage",crmStage);
+	json=Map();
+	updateDeal = zoho.crm.updateRecord("Deals",crmID,details,json,"zcrm_connection");
+	info updateDeal;
+	}
+else
+{
+info "invoice status is in "+status+" , cannot update the deal";
+}
+}
+else
+{
+	info "zcrm potential id is empty";
+}
