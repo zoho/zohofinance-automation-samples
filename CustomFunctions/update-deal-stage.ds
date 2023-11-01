@@ -20,7 +20,7 @@ invDetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID,"zboo
 status = invDetails.get("status");
 crmID = invDetails.get("zcrm_potential_id");
 info crmID;
-crmStage="paid";
+crmStage = "Closed/Won";
 if(crmID != "")
 {
 if(status=="paid")
