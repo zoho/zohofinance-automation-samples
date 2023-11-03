@@ -1,0 +1,138 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function automatically applies unused credits to the bill when it is created.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Bills
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+billID = bill.get("bill_id");
+billDate = bill.get("date").toDate();
+organizationID = organization.get("organization_id");
+total = bill.get("balance");
+vendorID = bill.get("vendor_id");
+apiUrl = organization.get("api_root_endpoint");
+creditsUrl = apiUrl + "/contacts/" + vendorID + "/payables/unusedcredits?organization_id=" + organizationID;
+unusedCredits = invokeurl
+[
+	url :creditsUrl
+	type :GET
+	connection:"zbooks"
+];
+//info "unusedCredits=> " + unusedCredits;
+unusedCredits = unusedCredits.get("unused_credits_payable");
+//info "unusedCredits=> " + unusedCredits;
+billBalance = bill.get("balance");
+total = bill.get("balance");
+billFullBalance = billBalance;
+unappliedAmounts = unusedCredits.get("unapplied_amounts");
+json = Map();
+ilist = List();
+billBalance = bill.get("balance").toDecimal();
+Flag = 0;
+appliedAmount = 0;
+credits = unusedCredits.get("unapplied_amounts");
+applyFlag = false;
+billTotal = total.toDecimal();
+if(total > 0)
+{
+	if(credits.size() > 0)
+	{
+		excess_creditList = List();
+		creditnote_creditList = List();
+		for each  findCredits in credits
+		{
+			creditBalance = findCredits.get("balance").toDecimal();
+			type = findCredits.get("entity_name");
+			paymentID = findCredits.get("entity_id");
+			if(billTotal <= creditBalance)
+			{
+				if(type == "vendor_payment")
+				{
+					amountApplied = billTotal;
+					creditMap = Map();
+					creditMap.put("amount_applied",amountApplied);
+					creditMap.put("payment_id",paymentID);
+					excess_creditList.add(creditMap);
+					billTotal = 0;
+				}
+				else if(type == "vendor_credit")
+				{
+					amountApplied = billTotal;
+					creditMap = Map();
+					creditMap.put("amount_applied",amountApplied);
+					creditMap.put("vendor_credit_id",paymentID);
+					creditnote_creditList.add(creditMap);
+					billTotal = 0;
+				}
+				if(billTotal == 0)
+				{
+					break;
+				}
+			}
+			else
+			{
+				if(type == "vendor_payment")
+				{
+					billTotal = billTotal - creditBalance.toDecimal();
+					amountApplied = creditBalance;
+					creditMap = Map();
+					creditMap.put("amount_applied",amountApplied);
+					creditMap.put("payment_id",paymentID);
+					excess_creditList.add(creditMap);
+				}
+				else if(type == "vendor_credit")
+				{
+					billTotal = billTotal - creditBalance;
+					amountApplied = creditBalance;
+					creditMap = Map();
+					creditMap.put("amount_applied",amountApplied);
+					creditMap.put("vendor_credit_id",paymentID);
+					creditnote_creditList.add(creditMap);
+				}
+			}
+		}
+	}
+	json = Map();
+	if(creditnote_creditList.size() > 0)
+	{
+		json.put("apply_vendor_credits",creditnote_creditList);
+		applyFlag = true;
+	}
+	if(excess_creditList.size() > 0)
+	{
+		json.put("bill_payments",excess_creditList);
+		applyFlag = true;
+	}
+	if(applyFlag == true)
+	{
+		
+		params = Map();
+		params.put("JSONString",json);
+		url = apiUrl + "/bills/" + billID + "/credits?organization_id=" + organizationID;
+		//info params;
+		applyCrt = invokeurl
+		[
+			url :url
+			type :POST
+			parameters:params
+			connection:"zbooks"
+		];
+		info applyCrt.get("message");
+	}
+	else
+	{
+		info "There are no credits available";
+	}
+}
+else
+{
+	info "bill has been paid already, cannot apply credits";
+}
