@@ -40,3 +40,4 @@ Every business is unique and each of them follows a specific workflow. While man
 24. [*To populate deal name on Estimate PDF*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/populate-deal-name-on-PDF.ds)
 25. [*To create PO From SO(based on Preferred vendor)*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/Create-PO-From-SO.ds)
 26. [*Update deal stage*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update-deal-stage.ds)
+27. [*Apply Unused credits to bills*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/apply_unused_credits_to_bills.ds)
