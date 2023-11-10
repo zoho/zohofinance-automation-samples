@@ -16,7 +16,7 @@
 */
 
 minLoyaltyAmount = 100;//Here, you can change the minimum loyalty amount
-loyaltyFieldName = "cf_landmark";//api name of the field that is created at contact level.
+loyaltyFieldName = "cf_loyalty_points";//api name of the field that is created at contact level.
 loyaltyLimit = 500;//replace Loyalty limit for the customers
 
 invoiceID = invoice.get("invoice_id");
