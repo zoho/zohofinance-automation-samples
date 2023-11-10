@@ -81,7 +81,7 @@ if(!currentCxLoyalty.isNull())
 		}
 		balance = availableLoyalty - (loyaltyLimit * numberOfCredits);
 		fieldMap.put("value",balance.round(0));
-		cmtDescription = "The credit note #" + creeditNumberList + " has been created for Loyalty for the amount: " + loyaltyLimit + ". " + "The Balance of Loyalty point will be " + balance;
+		cmtDescription = "The credit note #" + creeditNumberList + " has been created. The Balance of Loyalty point will be " + balance;
 	}
 	else
 	{
