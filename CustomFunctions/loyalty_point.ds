@@ -2,14 +2,8 @@
 
   This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
 	
-  This custom function calculates Commission for the Salesperson and adds it as an Expense.
+  This custom function will help you to track loyalty points in Zoho Books.
   
-  Create an Invoice level Custom field with the name "Commission Percent" and datatype as "Percent".
-  
-  Copy the API Field Name of the custom field that you have created and update the value of the variable "CF_API_NAME".
-  If you want to change your paid-through account, you can also do that by editing the variable "PAID_THROUGH_ACCOUNT_NAME".
-  Currently, it is set to `Petty Cash`.
-
   Create a connection by the name "zbooks" for the Zoho Books service.
 
   Module                  - Invoice
