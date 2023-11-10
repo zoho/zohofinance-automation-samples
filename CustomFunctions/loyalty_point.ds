@@ -1,0 +1,119 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function calculates Commission for the Salesperson and adds it as an Expense.
+  
+  Create an Invoice level Custom field with the name "Commission Percent" and datatype as "Percent".
+  
+  Copy the API Field Name of the custom field that you have created and update the value of the variable "CF_API_NAME".
+  If you want to change your paid-through account, you can also do that by editing the variable "PAID_THROUGH_ACCOUNT_NAME".
+  Currently, it is set to `Petty Cash`.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+
+  Module                  - Invoice
+  Workflow Type           - Event Based
+  When an Invoice is      - Created or Edited
+  Filter the triggers     - When Status is Paid
+  Every time or Just Once - Just Once 
+  Actions                 - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+minLoyaltyAmount = 100;//Here, you can change the minimum loyalty amount
+loyaltyFieldName = "cf_landmark";//api name of the field that is created at contact level.
+loyaltyLimit = 500;//replace Loyalty limit for the customers
+
+invoiceID = invoice.get("invoice_id");
+customerID = invoice.get("customer_id");
+organizationID = organization.get("organization_id");
+apiEndPoint = organization.get("api_root_endpoint");
+total = invoice.get("total").toDecimal();
+contact = zoho.books.getRecordsByID("contacts",organizationID,customerID,"zbooks").get("contact");
+currentCxLoyalty = contact.get("custom_field_hash").get(loyaltyFieldName);
+currentloyaltyPoint = total / minLoyaltyAmount;
+cmt = Map();
+fieldList = List();
+fieldMap = Map();
+fieldMap.put("api_name",loyaltyFieldName);
+creditnote = false;
+cmtDescription = "";
+if(!currentCxLoyalty.isNull())
+{
+	availableLoyalty = currentloyaltyPoint.floor() + currentCxLoyalty.toDecimal();
+	if(availableLoyalty >= loyaltyLimit)
+	{
+		numberOfCredits = availableLoyalty / loyaltyLimit;
+		numberOfCredits = numberOfCredits.floor();
+		creeditNumberList = List();
+		page = 1;
+		loop = leftpad(" ",numberOfCredits).replaceAll(" ",",");
+		for each  number in loop.toList()
+		{
+			if(page<=numberOfCredits)
+			{
+				imap = Map();
+				imap.put("description","Loyalty Amount");
+				imap.put("quantity",1);
+				imap.put("rate",loyaltyLimit);
+				itemList = List();
+				itemList.add(imap);
+				params = Map();
+				params.put("customer_id",customerID);
+				params.put("line_items",itemList);
+				params.put("invoice_id",invoiceID);
+				createCredit = zoho.books.createRecord("creditnotes",organizationID,params,"zbooks");
+				info createCredit.get("message");
+				info params;
+				if(createCredit.get("code") == 0)
+				{
+					creeditNumber = createCredit.get("creditnote").get("creditnote_number");
+					creeditNumberList.add(creeditNumber);
+					creditnote = true;
+				}
+				page=page+1;
+			}
+			else 
+            {
+				break;
+            }
+		}
+		balance = availableLoyalty - (loyaltyLimit * numberOfCredits);
+		fieldMap.put("value",balance.round(0));
+		cmtDescription = "The credit note #" + creeditNumberList + " has been created for Loyalty for the amount: " + loyaltyLimit + ". " + "The Balance of Loyalty point will be " + balance;
+	}
+	else
+	{
+		fieldMap.put("value",availableLoyalty.round(0));
+	}
+}
+else
+{
+	fieldMap.put("value",currentloyaltyPoint.floor().round(0));
+}
+fieldList.add(fieldMap);
+json = Map();
+json.put("custom_fields",fieldList);
+updateContact = zoho.books.updateRecord("contacts",organizationID,customerID,json,"zbooks");
+info updateContact.get("message");
+info json;
+if(creditnote == true)
+{
+	cmt.put("description",cmtDescription);
+}
+else
+{
+	comment = "The loayalty balance has been updated. Now, the balance will be " + fieldMap.get("value");
+	cmt.put("description",comment);
+}
+cmtMap = Map();
+cmtMap.put("JSONString",cmt);
+comment = invokeurl
+[
+	url :apiEndPoint+"/contacts/" + customerID + "/comments?organization_id=" + organizationID
+	type :POST
+	parameters:cmtMap
+	connection:"zbooks"
+];
+info comment;
