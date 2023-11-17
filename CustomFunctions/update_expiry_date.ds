@@ -1,0 +1,26 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function will automatically update the expiry date based on the estimate date. 
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Estimate
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+estimateID = estimate.get("estimate_id");
+numberDaysTobeExtended = 90;
+estimatedate = estimate.get("date").toDate();
+organizationID = organization.get("organization_id");
+estDate = estimate.get("date");
+expiryDate = estDate.addDay(numberDaysTobeExtended).toString("yyyy-MM-dd");
+json = Map();
+json.put("expiry_date", expiryDate);
+result =  zoho.books.updateRecord("Estimates", organizationID, estimateID,json,"zbooks");
+info result.get("message");
+info json;
