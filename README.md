@@ -42,3 +42,4 @@ Every business is unique and each of them follows a specific workflow. While man
 26. [*Update deal stage*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update-deal-stage.ds)
 27. [*Apply Unused credits to bills*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/apply_unused_credits_to_bills.ds)
 28. [*Loyalty Point*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/loyalty_point.ds)
+29. [*Update Expiry Date of an Estimate*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_expiry_date.ds)
