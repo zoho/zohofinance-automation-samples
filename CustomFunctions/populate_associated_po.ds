@@ -1,10 +1,9 @@
-/*
-  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
-	
+/*	
   This Deluge Function will help you to populate the associated PO in SO module of Zoho Books. 
   
   Create a connection by the name "zbooks" for Zoho Books service.
 */
+
 salesorderID = salesorder.get("salesorder_id");
 apiEndPoint = organization.get("api_root_endpoint");
 organizationID = organization.get("organization_id");
@@ -28,11 +27,13 @@ for each  comment in comments
 	if(type.equalsIgnoreCase("purchaseorder"))
 	{
 		purchaseorderID = comment.get("transaction_id");
+		info purchaseorderID;
 		po = zoho.books.getRecordsByID("purchaseorders",organizationID,purchaseorderID).get("purchaseorder");
 		poNumber = po.get("purchaseorder_number");
+		info poNumber;
 		vendorName = po.get("vendor_name");
 		details.put("purchaseorder_number",{"value":poNumber,"link":"https://books.zoho.com/app#/purchaseorders/" + purchaseorderID});
-		details.put("status",po.get("status"));
+		details.put("status",po.get("status").proper());
 		details.put("vendor_name",vendorName);
 		details.put("amount",po.get("total"));
 		listData.add(details);
