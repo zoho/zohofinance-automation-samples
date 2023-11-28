@@ -7,9 +7,9 @@
   
   Create a connection by the name "zbooks" for Zoho Books service.
 
-  Module               - Invoices
+  Module               - Sales Orders
   Workflow Type        - Event Based
-  When Invoice is      - Created
+  When Sales Order is  - Created
   Filter the triggers  - (Optional)
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 */
