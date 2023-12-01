@@ -1,0 +1,67 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function will help you to handle product warranty. 
+
+  Please ensure to replace[cf_warranty_period_months,cf_warrant_expiry_date] item level custom field api names in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+customerID = invoice.get("customer_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+line_items = invoice.get("line_items");
+invoice = zoho.books.getRecordsByID("invoices",organizationID,invoiceID).get("invoice");
+//info invoice;
+cfWarrantPeriod = "cf_warranty_period_months";//Replace cf_warranty_period_months with api name of the item custom field
+cfWarrantyDate = "cf_warrant_expiry_date";//Replace cf_warrant_expiry_date with api name of the item custom field
+iList = List();
+for each  item in line_items
+{
+	itemCF = item.get("item_custom_fields");
+	itemCFList = List();
+	period = "";
+	for each  field in itemCF
+	{
+		placeHolder = field.get("placeholder");
+		val = field.get("value");
+		
+		itemMap = Map();
+		itemMap.put("api_name",placeHolder);
+		itemMap.put("value",val);
+		itemCFList.add(itemMap);
+		if(placeHolder.equalsIgnoreCase(cfWarrantPeriod))
+		{
+			period = val;
+		}
+	}
+	itemMap = Map();
+	itemMap.put("api_name",cfWarrantyDate);
+	if(!period.isNull())
+	{
+		warrantyDate = invoicedate.addMonth(period);
+		itemMap.put("value",warrantyDate.toString("yyyy-MM-dd"));
+	}
+	else
+	{
+		itemMap.put("value"," ");
+	}
+	itemCFList.add(itemMap);
+	lineItemID = item.get("line_item_id");
+	lineItemMap = Map();
+	lineItemMap.put("line_item_id",lineItemID);
+	lineItemMap.put("item_custom_fields",itemCFList);
+	iList.add(lineItemMap);
+}
+json = Map();
+json.put("line_items",iList);
+json.put("reason","The warrant date field has been updated");
+updateInvoice = zoho.books.updateRecord("invoices",organizationID,invoiceID,json);
+info updateInvoice;
