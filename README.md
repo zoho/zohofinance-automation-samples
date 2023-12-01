@@ -44,3 +44,4 @@ Every business is unique and each of them follows a specific workflow. While man
 28. [*Loyalty Point*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/loyalty_point.ds)
 29. [*Update Expiry Date of an Estimate*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_expiry_date.ds)
 30. [*To show the associated Purchase Orders in Sales Order*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/populate_associated_po.ds)
+31. [*Product Warrenty Calculation*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/product_%20warranty.ds)
