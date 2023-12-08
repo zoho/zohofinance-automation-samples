@@ -1,0 +1,119 @@
+/*
+
+  This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
+	
+  This function will help you to schedule an email for the low-stock items. 
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+  Please ensure to replace cf_low_stock_alert with user level custom field API name. 
+  
+  Frquency                - Weekly
+  Expires After           - Never expires
+  
+*/
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+apiUrl = organization.get("api_root_endpoint");
+companyname = organization.get("name");
+cfPlaceholder="cf_low_stock_alert";//Replace cf_low_stock_alert with api name of the user custom field.
+page = 0;
+pageSize = 100;
+pageSize = pageSize - 1;
+pageList = "".rightpad(pageSize).replaceAll(" ",",").toList();
+recordList = List();
+cDate = zoho.currentdate;
+for each item in pageList
+{
+page=page+1;
+url=apiUrl+"/items?page="+page+"&per_page=200&filter_by=Status.Lowstock&sort_column=name&sort_order=A&usestate=true&organization_id="+organizationID;
+response = invokeurl
+[
+	url: url
+	type: GET
+	connection: "zbooks"
+];
+items=response.get("items");
+if(items.size()>0)
+{
+	recordList.addAll(items);
+}
+else{
+	break;
+}
+
+}
+info recordList.size();
+if(recordList.size()>0)
+{
+searchParam=Map();
+searchParam.put(cfPlaceholder,true);
+url=apiUrl+"/users?organization_id="+organizationID;
+response = invokeurl
+[
+	url: url
+	type: GET
+	parameters: searchParam
+	connection: "zbooks"
+];
+info response;
+users=response.get("users");
+emailList=List();
+if(users.size()>0)
+{
+for each orgUser in users
+{
+	emailList.add(orgUser.get("email"));
+}
+
+
+
+	st = "";
+			st = st + "<div style=\"background: #4CAF50;\"><div style=\"padding: 2% 3%;max-width: 150px;max-height:50px;\"></div></div><div style=\"padding:3%;text-align:center;background: #4CAF50;\"><div style=\"color:#fff;font-size:20px;font-weight:400;\">LOW STOCK<br>" + cDate + "</div></div>";
+			st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"> <div style=\"padding: 30px 0; color: #555;line-height: 1.7;\">Hi, <br><br>An overview of the low item list is available below for your reference<br></div></div>";
+			st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"><table style=\"font-family:\"Trebuchet MS\", Arial, Helvetica, sans-serif; border-collapse: collapse;width: 100%;\"><tr style=\"nth-child(even){background-color: #f2f2f2;}\"><th style=\" border: 1px solid #ddd; padding: 8px; padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #4CAF50; color: white;border: 1px solid #ddd;padding: 8px;\">SR NO</th><th style=\"border: 1px solid #ddd; padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd;padding: 8px;\">ITEM NAME</th><th style=\" border: 1px solid #ddd;padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd; padding: 8px;\">SKU</th><th style=\" border: 1px solid #ddd; padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd;padding: 8px;\">REORDER LEVEL</th><th style=\" border: 1px solid #ddd; padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #4CAF50;color: white;border: 1px solid #ddd;padding: 8px;\">STOCK ON HAND</th></tr>";
+	
+	j=1;
+
+	for each product in recordList
+    {
+		
+		available_stock=product.get("available_stock");
+		reorder_level=product.get("reorder_level");
+		item_id=product.get("item_id");
+		name=product.get("name");
+		stock_on_hand=product.get("stock_on_hand");
+		sku=product.get("sku");
+		link="https://books.zoho"+dc+"/app/"+organizationID+"#/inventory/items/"+item_id;
+		st = st + "<tr><td style=\"border: 1px solid #ddd; padding: 8px;\">" + j + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\"><a href="+link+">" + name + "</a></td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + sku + "</td><td style=\"border: 1px solid #ddd;padding: 8px;\">" + reorder_level + "</td><td style=\"border: 1px solid #ddd;padding: 8px;\">" + stock_on_hand + "</td></tr>";
+					j = j + 1;
+		
+		
+    }
+	st = st + "</table>";
+	customViewURL="https://books.zoho"+dc+"/app/"+organizationID+"#/inventory/items?filter_by=Status.Lowstock";
+	st = st + "<div style=\"text-align: center;margin: 25px 0;\"> <a style=\"text-decoration: none;\" href=" + customViewURL + "> <span style=\"background-color:#4dcf59; border: 1px solid #49bd54; cursor: pointer; text-align: center; min-width: 140px; color: #fff; display: inline-block; text-decoration: none; padding: 10px 20px\">OPEN VIEW</span></a> </div></div>";
+	st = st + "<br><br><br>Regards, <div style=\"color: #8c8c8c; font-weight: 400\"></div><div style=\"color: #b1b1b1\">" + companyname + "</div></div></div><br>";
+		
+	
+			if(emailList.size()>0)
+			{
+				sendmail
+				[
+					from :zoho.adminuserid
+					to :emailList
+					subject :"LOW STOCK"
+					message :st
+				]
+				msg = "The mail has been sent to " + emailList;
+				info msg;
+				
+			}
+	
+}
+else{
+	info "Users are unable to receive notifications for low stock as the checkbox is not selected.";
+}
+}
+else{
+	info "There are no items with low stock";
+}
