@@ -45,3 +45,4 @@ Every business is unique and each of them follows a specific workflow. While man
 29. [*Update Expiry Date of an Estimate*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_expiry_date.ds)
 30. [*To show the associated Purchase Orders in Sales Order*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/populate_associated_po.ds)
 31. [*Product Warrenty Calculation*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/product_%20warranty.ds)
+32. [*To Schedule an email for low-stock Items*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_email_for_low_stock_items.ds)
