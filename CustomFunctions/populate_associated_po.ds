@@ -28,7 +28,7 @@ for each  comment in comments
 	{
 		purchaseorderID = comment.get("transaction_id");
 		info purchaseorderID;
-		po = zoho.books.getRecordsByID("purchaseorders",organizationID,purchaseorderID).get("purchaseorder");
+		po = zoho.books.getRecordsByID("purchaseorders",organizationID,purchaseorderID,"zbooks").get("purchaseorder");
 		poNumber = po.get("purchaseorder_number");
 		info poNumber;
 		vendorName = po.get("vendor_name");
