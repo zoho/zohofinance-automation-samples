@@ -1,0 +1,79 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function will help you to add gift item for an invoice. 
+
+  Please ensure to replace[cf_days,cf_rate] item level custom field api names in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+
+firstGiftSlab = [100,499];//Rate slabs can be modified here.
+secondGiftSlab = [500,999];//Rate slabs can be modified here.
+thirdGiftSlab = [1000,"§"];//Rate slabs can be modified here.
+
+firstGift = "XXXXX";//Replace XXXXX with correponding Gift item ID[Get it from URL of item]
+secondGift = "YYYYY";//Replace YYYYY with correponding Gift item ID[Get it from URL of item]
+thirdGift = "XXXXX";//Replace ZZZZZ with correponding Gift item ID[Get it from URL of item]
+
+total = invoice.get("total");
+giftItem = "";
+if(total < firstGiftSlab.get(0))
+{
+	giftItem = "";
+}
+else if(total >= firstGiftSlab.get(0) && total <= firstGiftSlab.get(1))
+{
+	giftItem = firstGift;
+}
+else if(total >= secondGiftSlab.get(0) && total <= secondGiftSlab.get(1))
+{
+	giftItem = secondGift;
+}
+else if(total >= thirdGiftSlab.get(0))
+{
+	giftItem = thirdGift;
+}
+info giftItem;
+if(!giftItem == "")
+{
+	invoiceID = invoice.get("invoice_id");
+	invoicedate = invoice.get("date").toDate();
+	organizationID = organization.get("organization_id");
+	customerID = invoice.get("customer_id");
+	invdetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID,"zbooks").get("invoice");
+	fee = invoice.get("sub_total").toDecimal() * 0.006;
+	lineItems = invdetails.get("line_items").toList();
+	iList = List();
+	for each  find in lineItems
+	{
+		iMap = Map();
+		lineID = find.get("line_item_id");
+		iMap.put("line_item_id",lineID);
+		taxID = find.get("tax_id");
+		iList.add(iMap);
+	}
+	pMap = Map();
+	pMap.put("item_id",giftItem);
+	pMap.put("description","Gift Item");
+	pMap.put("rate",0);
+	pMap.put("tax_id",taxID);
+	iList.add(pMap);
+	json = Map();
+	json.put("customer_id",customerID);
+	json.put("reason","added Gift item");
+	json.put("line_items",iList);
+	res = zoho.books.updateRecord("Invoices",organizationID,invoiceID,json,"zbooks");
+	info res.get("message");
+	info json;
+}
+else
+{
+	info "No Gift";
+}
