@@ -47,3 +47,4 @@ Every business is unique and each of them follows a specific workflow. While man
 31. [*Product Warrenty Calculation*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/product_%20warranty.ds)
 32. [*To Schedule an email for low-stock Items*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_email_for_low_stock_items.ds)
 33. [*Associate the templates automatically based on customer Country*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/country_based_template.ds)
+34. [*To add Gift Item for An invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/to_add_gift_items.ds)
