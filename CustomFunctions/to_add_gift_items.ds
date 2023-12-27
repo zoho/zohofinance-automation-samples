@@ -3,8 +3,6 @@
 	
   This Custom Function will help you to add gift item for an invoice. 
 
-  Please ensure to replace[cf_days,cf_rate] item level custom field api names in the script.
-  
   Create a connection by the name "zbooks" for Zoho Books service.
 
   Module               - Invoices
