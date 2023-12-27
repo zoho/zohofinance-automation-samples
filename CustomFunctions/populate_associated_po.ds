@@ -1,11 +1,7 @@
-/*	
-  This Deluge Function will help you to populate the associated PO in SO module of Zoho Books. 
-  
-  Create a connection by the name "zbooks" for Zoho Books service.
-*/
 
 salesorderID = salesorder.get("salesorder_id");
 apiEndPoint = organization.get("api_root_endpoint");
+dc = organization.get("data_center_extension");
 organizationID = organization.get("organization_id");
 headerData = List();
 headerData.add({"key":"purchaseorder_number","value":"Purchaseorder Number"});
@@ -19,7 +15,6 @@ comments = invokeurl
 	connection:"zbooks"
 ];
 comments = comments.get("comments");
-details = Map();
 listData = List();
 for each  comment in comments
 {
@@ -28,15 +23,19 @@ for each  comment in comments
 	{
 		purchaseorderID = comment.get("transaction_id");
 		info purchaseorderID;
-		po = zoho.books.getRecordsByID("purchaseorders",organizationID,purchaseorderID,"zbooks").get("purchaseorder");
-		poNumber = po.get("purchaseorder_number");
-		info poNumber;
-		vendorName = po.get("vendor_name");
-		details.put("purchaseorder_number",{"value":poNumber,"link":"https://books.zoho.com/app#/purchaseorders/" + purchaseorderID});
-		details.put("status",po.get("status").proper());
-		details.put("vendor_name",vendorName);
-		details.put("amount",po.get("total"));
-		listData.add(details);
+		if(!purchaseorderID.isNull())
+		{
+			po = zoho.books.getRecordsByID("purchaseorders",organizationID,purchaseorderID,"zbooks").get("purchaseorder");
+			poNumber = po.get("purchaseorder_number");
+			info poNumber;
+			vendorName = po.get("vendor_name");
+			details = Map();
+			details.put("purchaseorder_number",{"value":poNumber,"link":"https://books.zoho" + dc + "/app/" + organizationID + "#/purchaseorders/" + purchaseorderID});
+			details.put("status",po.get("status").proper());
+			details.put("vendor_name",vendorName);
+			details.put("amount",po.get("total"));
+			listData.add(details);
+		}
 	}
 }
 resultMap = Map();
