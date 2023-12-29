@@ -1,0 +1,81 @@
+/*
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This Custom Function will create a task when an estimate is created in Zoho Books. 
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Estimates
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+taskPriorityFieldApiName = "cf_priority";//Replace cf_priority with estimate level custom field api name
+remindBeforeDays = 3;
+estimateID = estimate.get("estimate_id");
+estimatedate = estimate.get("date").toDate();
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+estimate = zoho.books.getRecordsByID("Estimates",organizationID,estimateID,"zbooks").get("estimate");
+priority = estimate.get("custom_field_hash").get(taskPriorityFieldApiName);
+priories = Map();
+priories.put("low", "low");
+priories.put("very_low", "lowest");
+priories.put("normal", "normal");
+priories.put("high", "high");
+priories.put("very_high", "highest");
+info priories.get(priority.toLowerCase().replaceAll(" ", "_"));
+if(!priority.isNull())
+{
+	if(!priority.equalsIgnoreCase("none"))
+	{
+		createdBYID = estimate.get("created_by_id");
+		estimateNumber = estimate.get("estimate_number");
+		expiryDate = estimate.get("expiry_date");
+		if(expiryDate.isNull())
+		{
+			expiryDate = today.addDay(7);
+		}
+		reminderMap = Map();
+		reminderMap.put("remind_before",remindBeforeDays);
+		reminderMap.put("remind_type","days");
+		reminderMap.put("alert_type","both");
+		customerID = estimate.get("customer_id");
+		json = Map();
+		json.put("owner_id",createdBYID);
+		json.put("title","Follow-up of the Quote QT - " + estimateNumber);
+		json.put("due_date",expiryDate.toString("yyyy-MM-dd"));
+		json.put("contact_id",customerID);
+		json.put("priority",priories.get(priority.toLowerCase().trim().replaceAll(" ", "_")));
+		json.put("send_email_notification","true");
+		json.put("reminder",reminderMap);
+		url = apiUrl + "/tasks?organization_id=" + organizationID;
+		params = Map();
+		params.put("JSONString",json);
+		response = invokeurl
+		[
+			url :url
+			type :POST
+			parameters:params
+			connection:"zbooks"
+		];
+		info response.get("message");
+		info params;
+		if(response.get("code") == 0)
+		{
+			cmt = Map();
+			cmt.put("description",response.get("message"));
+			cmtMap = Map();
+			cmtMap.put("JSONString",cmt);
+			comment = invokeurl
+			[
+				url :apiUrl + "/estimates/" + estimateID + "/comments?organization_id=" + organizationID
+				type :POST
+				parameters:cmtMap
+				connection:"zbooks"
+			];
+			info comment;
+		}
+	}
+}
