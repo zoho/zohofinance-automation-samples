@@ -1,0 +1,78 @@
+/*
+This is a sample Custom Function written to be used in Custom Button of Zoho Books.
+
+This Custom Button will help you to send the Item Catalogue to the Customers
+
+Create a connection by the name "zbooks" for Zoho Books service.
+*/
+
+organizationID = organization.get("organization_id");
+apiEndPoint = organization.get("api_root_endpoint");
+pageList = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
+itemList = List();
+i = 0;
+p = 0;
+itemMapList = List();
+for each  page in pageList
+{
+	i = i + 1;
+	items = zoho.books.getRecords("items",organizationID,"page=" + page,"zbooks").get("items");
+	for each  findItems in items
+	{
+		itemID = findItems.get("item_id");
+		if(itemList.notcontains(itemID))
+		{
+			p = p + 1;
+			itemList.add(itemID);
+			itemMap = Map();
+			itemMap.put("Item Name",findItems.get("name").replaceAll(","," "));
+			itemMap.put("sku",findItems.get("sku"));
+			itemMap.put("Rate",findItems.get("rate"));
+			itemMapList.add(itemMap);
+		}
+	}
+}
+//make csv
+fileStr = "Item Name,SKU,Rate\n";
+//Header row
+for each  find in itemMapList
+{
+	fileStr = fileStr + find.get("Item Name") + "," + find.get("sku") + "," + find.get("Rate") + "\n";
+	fileThing = fileStr.toFile("List of Items" + ".csv");
+}
+customerList = List();
+customerIdList = List();
+index = 0;
+for each contact in customer
+{
+	contactDetails = invokeurl
+	[
+		url :apiEndPoint + "/contacts/"+contact.get("contact_id")+"?organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	customers = contactDetails.get("contact");
+	contactPersons = customers.get("contact_persons").toList();
+	for each  findCP in contactPersons
+	{
+		primaryContacts = findCP.get("is_primary_contact");
+		if(primaryContacts == true)
+		{
+			email = findCP.get("email");
+			info email;
+		}
+	}
+msgStr = "Dear, " + contact.get("contact_name") + "<br>Greetings! Attached is the PDF listing of items available for sale. If you have any queries or need clarification, please contact us at " + organization.get("name") + "<br>Best regards,<br>" + user.get("name")+"<br>"+ organization.get("name");
+	sendmail
+	[
+		from :zoho.adminuserid
+		to :email
+		subject :"Item Catalogue - " + organization.get("name")
+		message :msgStr
+		Attachments :file:fileThing
+	]
+}
+resultMap = Map();
+resultMap.put("message","The Mail has been sent to the customers");
+resultMap.put("code",0);
+return resultMap;
