@@ -1,0 +1,40 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This function will help you to display list of associated SO on Estimate details screen.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+*/
+
+estimateID = estimate.get("estimate_id");
+apiEndPoint = organization.get("api_root_endpoint");
+dc = organization.get("data_center_extension");
+organizationID = organization.get("organization_id");
+headerData = List();
+headerData.add({"key":"salesorder_number","value":"Sales Order Number"});
+headerData.add({"key":"customer_name","value":"Customer Name"});
+headerData.add({"key":"status","value":"Status"});
+headerData.add({"key":"amount","value":"Amount","align":"right"});
+est = zoho.books.getRecordsByID("estimates",organizationID,estimateID,"zbooks").get("estimate");
+salesorders = est.get("salesorders");
+listData = List();
+for each  so in salesorders
+{
+	salesorderID = so.get("salesorder_id");
+	if ( !salesorderID.isNull() ) 
+    {
+		salesorder = zoho.books.getRecordsByID("salesorders",organizationID,salesorderID,"zbooks").get("salesorder");
+		soNumber = salesorder.get("salesorder_number");
+		customerName = salesorder.get("customer_name");
+		details = Map();
+		details.put("salesorder_number",{"value":soNumber,"link":"https://books.zoho" + dc + "/app/" + organizationID + "#/salesorders/" + salesorderID});
+		details.put("status",salesorder.get("status").proper());
+		details.put("customer_name",customerName);
+		details.put("amount",salesorder.get("total"));
+		listData.add(details);
+	}
+}
+resultMap = Map();
+resultMap.put("header_context",headerData);
+resultMap.put("data",listData);
+return resultMap;
