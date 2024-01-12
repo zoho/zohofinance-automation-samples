@@ -50,3 +50,4 @@ Every business is unique and each of them follows a specific workflow. While man
 34. [*To add Gift Item for An invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/to_add_gift_items.ds)
 35. [*To create a task when an estimate is created*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/create_task.ds)
 36. [*To send Item Catalogue to Customers*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/send_item_catalogue.ds)
+37. [*Display List Of Associated SO on Estimate details screen*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/display_associated_so.ds)
