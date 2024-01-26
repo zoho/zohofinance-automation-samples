@@ -52,3 +52,4 @@ Every business is unique and each of them follows a specific workflow. While man
 36. [*To send Item Catalogue to Customers*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/send_item_catalogue.ds)
 37. [*Display List Of Associated SO on Estimate details screen*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/display_associated_so.ds)
 38. [*To Add Rush charges on Invoices*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/rush_charge.ds)
+39. [*Schedule Vendor Statement*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_vendor_statement.ds)
