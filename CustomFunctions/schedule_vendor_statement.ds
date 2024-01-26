@@ -1,0 +1,55 @@
+/*
+
+  This is a sample Custom Function written to be used in the Workflow automation of Zoho Books.
+	
+  This custom function schedules vendor statement to be sent automatically in Zoho Books.
+  
+  Create a vendor-level Custom field with the name "Statement Date" and datatype as "Date".
+  Enter the date from when you have to send the vendor statement in the custom field.
+  If it is common for all vendors, you can create a custom field with that value as a default value.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Vendors
+  Workflow Type        - Date Based
+  Date of Execution    - 0 days after Statement Date
+  Filter the triggers  - (Optional)
+  Execution Time       - Enter a suitable time of your choice
+  Execution Cycle.     - Monthly 
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+vendorID = vendor.get("contact_id");
+vendorName = vendor.get("contact_name");
+organizationID = organization.get("organization_id");
+cDate = zoho.currentdate;
+end_date = cDate.toString("yyyy-MM-dd");
+apiUrl = organization.get("api_root_endpoint");
+json = Map();
+getUnpaidbills = invokeurl
+[
+	url :apiUrl + "/bills?page=1&usestate=false&vendor_id=" + vendorID + "&status=unpaid&organization_id=" + organizationID
+	type :GET
+	connection:"zbooks"
+];
+getUnpaidbills = getUnpaidbills.get("bills");
+if(getUnpaidbills.size() > 0)
+{
+	s = getUnpaidbills.size();
+	s = s - 1;
+	bills = getUnpaidbills.get(s);
+	billDate = bills.get("date");
+	start_date = billDate.toString("yyyy-MM-dd");
+	sendst = invokeurl
+	[
+		url :apiUrl + "/contacts/" + vendorID + "/statements/email?start_date=" + start_date + "&end_date=" + end_date + "&organization_id=" + organizationID
+		type :POST
+		parameters:json
+		connection:"zbooks"
+	];
+	info "sendst=" + sendst;
+}
+else
+{
+	info "No unpaid bills for this vendor " + vendorName;
+}
