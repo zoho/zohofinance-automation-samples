@@ -1,0 +1,68 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function send an email to user if the credit limit is exceeded. 
+
+  Please ensure to replace cf_checkbox with user level custom field api name in the script. 
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - Status is Draft
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+companyname = organization.get("name");
+userFieldAPIName = "cf_checkbox";
+//Replace cf_checkbox with user level custom field api name.
+organizationID = organization.get("organization_id");
+invoiceNumber = invoice.get("invoice_number");
+customerID = invoice.get("customer_id");
+apiUrl = organization.get("api_root_endpoint");
+customerDetails = zoho.books.getRecordsByID("Contacts",organizationID,customerID,"zbooks").get("contact");
+contactName = customerDetails.get("contact_name");
+info contactName;
+unUsedCredit = customerDetails.get("unused_credits_receivable_amount");
+info unUsedCredit;
+creditLimit = customerDetails.get("credit_limit");
+info creditLimit;
+outStanding = customerDetails.get("outstanding_receivable_amount").toDecimal() + invoice.get("total").toDecimal();
+info outStanding;
+outStandingAfterCredit = outStanding.toDecimal() - unUsedCredit.toDecimal();
+info outStandingAfterCredit;
+if(outStandingAfterCredit >= creditLimit)
+{
+	emailList = List();
+	getusers = invokeurl
+	[
+		url :apiUrl + "/users?" + userFieldAPIName + "=true&organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	users = getusers.get("users");
+	for each  user in users
+	{
+		userEmail = user.get("email");
+		emailList.add(userEmail);
+	}
+	if(emailList.size() > 0)
+	{
+		exceededAmount = outStandingAfterCredit - creditLimit.toDecimal();
+		sub = "Subject:  Credit Limit alert for Invoice - " + invoiceNumber + " from " + companyname;
+		mailMsg = "<html><head><style>table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}td, th {border: 1px solid #dddddd;textalign: left;padding: 8px;}tr:nth-child(even) {background-color: #dddddd;}</style></head><body>Hello,<br><br>An invoice has been created that exceeds the Credit limit of the customer - " + contactName + "<br><br><table><tr><td>Outstanding Receivables</td><td>" + customerDetails.get("outstanding_receivable_amount") + "</td></tr><tr><td>Invoice Amount</td><td>" + invoice.get("total") + "</td></tr><tr><td>Total Outstanding Receivables</td><td>" + outStandingAfterCredit + "</td></tr><tr><td>Exceeded Amount</td><td>" + exceededAmount + "</td></tr></table><br><br>Thank you!</body></html>";
+		sendmail
+		[
+			from :zoho.adminuserid
+			to :emailList
+			subject :sub
+			message :mailMsg
+		]
+		info "The email has been sent to " + emailList;
+	}
+}
+else
+{
+	info "Credit limit is less than outstanding";
+}
