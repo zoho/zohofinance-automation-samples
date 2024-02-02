@@ -53,3 +53,4 @@ Every business is unique and each of them follows a specific workflow. While man
 37. [*Display List Of Associated SO on Estimate details screen*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/display_associated_so.ds)
 38. [*To Add Rush charges on Invoices*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/rush_charge.ds)
 39. [*Schedule Vendor Statement*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_vendor_statement.ds)
+40. [*Credit_Limit_Alert_For_Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/credit_limit_alert.ds)
