@@ -23,15 +23,10 @@ customerID = invoice.get("customer_id");
 apiUrl = organization.get("api_root_endpoint");
 customerDetails = zoho.books.getRecordsByID("Contacts",organizationID,customerID,"zbooks").get("contact");
 contactName = customerDetails.get("contact_name");
-info contactName;
 unUsedCredit = customerDetails.get("unused_credits_receivable_amount");
-info unUsedCredit;
 creditLimit = customerDetails.get("credit_limit");
-info creditLimit;
 outStanding = customerDetails.get("outstanding_receivable_amount").toDecimal() + invoice.get("total").toDecimal();
-info outStanding;
 outStandingAfterCredit = outStanding.toDecimal() - unUsedCredit.toDecimal();
-info outStandingAfterCredit;
 if(outStandingAfterCredit >= creditLimit)
 {
 	emailList = List();
@@ -49,9 +44,10 @@ if(outStandingAfterCredit >= creditLimit)
 	}
 	if(emailList.size() > 0)
 	{
+		outstandingReceivables = customerDetails.get("outstanding_receivable_amount").toDecimal() - unUsedCredit.toDecimal();
 		exceededAmount = outStandingAfterCredit - creditLimit.toDecimal();
 		sub = "Subject:  Credit Limit alert for Invoice - " + invoiceNumber + " from " + companyname;
-		mailMsg = "<html><head><style>table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}td, th {border: 1px solid #dddddd;textalign: left;padding: 8px;}tr:nth-child(even) {background-color: #dddddd;}</style></head><body>Hello,<br><br>An invoice has been created that exceeds the Credit limit of the customer - " + contactName + "<br><br><table><tr><td>Outstanding Receivables</td><td>" + customerDetails.get("outstanding_receivable_amount") + "</td></tr><tr><td>Invoice Amount</td><td>" + invoice.get("total") + "</td></tr><tr><td>Total Outstanding Receivables</td><td>" + outStandingAfterCredit + "</td></tr><tr><td>Exceeded Amount</td><td>" + exceededAmount + "</td></tr></table><br><br>Thank you!</body></html>";
+		mailMsg = "<html><head><style>table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}td, th {border: 1px solid #dddddd;textalign: left;padding: 8px;}tr:nth-child(even) {background-color: #dddddd;}</style></head><body>Hello,<br><br>An invoice has been created that exceeds the Credit limit of the customer - " + contactName + "<br><br><table><tr><td>Outstanding Receivables</td><td>" + outstandingReceivables + "</td></tr><tr><td>Invoice Amount</td><td>" + invoice.get("total") + "</td></tr><tr><td>Total Outstanding Receivables</td><td>" + outStandingAfterCredit + "</td></tr><tr><td>Exceeded Amount</td><td>" + exceededAmount + "</td></tr></table><br><br>Thank you!</body></html>";
 		sendmail
 		[
 			from :zoho.adminuserid
