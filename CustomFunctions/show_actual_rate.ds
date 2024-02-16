@@ -1,0 +1,55 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function to show actual rate and markdown/markup on invoice.
+
+  Please ensure to replace[cf_orginal_rate,cf_discount_percentage] item level custom field api names in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+orginalRate = "cf_orginal_rate";
+unitPricePercentage = "cf_discount_percentage";
+invoiceDetails = zoho.books.getRecordsByID("invoices", organizationID, invoiceID,"zbooks").get("invoice");
+lineItems = invoiceDetails.get("line_items");
+lineItemList = List();
+for each line in lineItems
+{
+	imap = Map();
+	pricebookID = line.get("pricebook_id");
+	info pricebookID;
+	if ( !pricebookID.isNull() ) 
+    {
+		itemId = line.get("item_id");
+		item = zoho.books.getRecordsByID("items", organizationID, itemId).get("item");
+		rate = item.get("rate");
+		priceBookRate = line.get("rate");
+		unitPrice = rate.toDecimal() - priceBookRate.toDecimal();
+		unitPer = (unitPrice/rate.toDecimal())*100;
+		fieldList = List();
+		fieldMap = Map();
+		fieldMap.put("api_name", orginalRate);
+		fieldMap.put("value", rate);
+		fieldList.add(fieldMap);
+		fieldMap2 = Map();
+		fieldMap2.put("api_name", unitPricePercentage);
+		fieldMap2.put("value", unitPer.remove("-"));
+		fieldList.add(fieldMap2);
+		imap.put("item_custom_fields", fieldList);
+    }
+	imap.put("line_item_id", line.get("line_item_id"));
+	lineItemList.add(imap);
+}
+json = Map();
+json.put("line_items", lineItemList);
+update = zoho.books.updateRecord("invoices", organizationID, invoiceID, json,"zbooks");
+info update.get("message");
+info json;
