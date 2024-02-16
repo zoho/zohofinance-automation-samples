@@ -55,3 +55,4 @@ Every business is unique and each of them follows a specific workflow. While man
 39. [*Schedule Vendor Statement*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/schedule_vendor_statement.ds)
 40. [*Credit_Limit_Alert_For_Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/credit_limit_alert.ds)
 41. [*Credit Limit Alert for Sales Order*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/credit_alert_for_so.ds)
+42. [*To show the actual Rate of Items on the Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/show_actual_rate.ds)
