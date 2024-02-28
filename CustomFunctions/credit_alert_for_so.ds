@@ -31,7 +31,7 @@ if(outStandingAfterCredit >= creditLimit)
 	emailList = List();
 	getusers = invokeurl
 	[
-		url :apiUrl + "/users?" + userFieldAPIName + "=true&organization_id=" + organizationID
+		url :apiUrl + "/users?" + userFieldAPIName + "=true&&filter_by=Status.Active&organization_id=" + organizationID
 		type :GET
 		connection:"zbooks"
 	];
