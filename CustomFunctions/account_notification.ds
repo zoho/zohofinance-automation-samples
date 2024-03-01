@@ -1,7 +1,9 @@
 /*
 
   This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
-	
+
+  The scheduler will help you to send email notifications if the closing balance of the account is higher than the soft limit.
+
   Create a connection by the name "zbooks" for the Zoho Books service.
 
   Please ensure to replace cf_check, cf_soft_limit, cf_last_closing_balance with account level custom fields. 
