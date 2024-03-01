@@ -57,3 +57,4 @@ Every business is unique and each of them follows a specific workflow. While man
 41. [*Credit Limit Alert for Sales Order*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/credit_alert_for_so.ds)
 42. [*To show the actual Rate of Items on the Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/show_actual_rate.ds)
 43. [*To enable client portal*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/enable_client_portal.ds)
+44. [*To schedule an email if the closing balance of the account is higher than the soft limit*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_notification.ds)
