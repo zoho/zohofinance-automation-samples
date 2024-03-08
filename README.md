@@ -58,3 +58,4 @@ Every business is unique and each of them follows a specific workflow. While man
 42. [*To show the actual Rate of Items on the Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/show_actual_rate.ds)
 43. [*To enable client portal*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/enable_client_portal.ds)
 44. [*To schedule an email if the closing balance of the account is higher than the soft limit*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_notification.ds)
+45. [*To send an email when exceeds the Safe Limits of an account*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_safe_limit_notification.ds)
