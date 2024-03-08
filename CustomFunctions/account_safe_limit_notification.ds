@@ -1,0 +1,192 @@
+/*
+
+  This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
+	
+  This function will help you to schedule an email when exceeds Safe Limits of an account. 
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+  Please ensure to replace cf_safe_limit, cf_current_balance with account level custom field API name. 
+  
+  Frquency                - Daily
+  Expires After           - Never expires
+  
+*/
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+dc = organization.get("data_center_extension");
+companyname = organization.get("name");
+cfSoftLimitPlaceholder = "cf_safe_limit";
+//Replace cf_safe_limit with api name of the custom field
+cfLastUpdatedClosingBalancePlaceholder = "cf_current_balance";
+//Replace cf_last_closing_balance with api name of the custom field
+bulkAccountListCategory = Map();
+cDate = zoho.currentdate;
+page = 0;
+pageSize = 100;
+pageSize = pageSize - 1;
+pageList = "".rightpad(pageSize).replaceAll(" ",",").toList();
+accountsMap = Map();
+accountsCFMap = Map();
+apiCount = 0;
+for each  find in pageList
+{
+	page = page + 1;
+	accounts = invokeurl
+	[
+		url :apiUrl + "/chartofaccounts?page=" + page + "&per_page=200&organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	accounts = accounts.get("chartofaccounts");
+	if(accounts.size() > 0)
+	{
+		for each  account in accounts
+		{
+			accountType = account.get("account_type");
+			if(accountType.equalsIgnoreCase("expense"))
+			{
+				apiCount = apiCount + 1;
+				accountID = account.get("account_id");
+				accountsCFMap.put(accountID,account);
+				expenseAccount = zoho.books.getRecordsByID("chartofaccounts",organizationID,accountID,"zbooks").get("chart_of_account");
+				accountsMap.put(accountID,expenseAccount);
+				if(apiCount % 4 == 0)
+				{
+					url = "https://postman-echo.com/delay/4";
+					delayResponseCall = invokeurl
+					[
+						url :url
+						type :GET
+					];
+				}
+			}
+		}
+	}
+	else
+	{
+		break;
+	}
+}
+//info accountsMap;
+if(accountsMap.keys().size() > 0)
+{
+	isTrue = false;
+	j = 0;
+	st = "";
+	st = st + "<div style=\"background: #32B4E2 ;\"><div style=\"padding: 2% 3%;max-width: 150px;max-height:50px;\"></div></div><div style=\"padding:3%;text-align:center;background: #32B4E2 ;\"><div style=\"color:#fff;font-size:20px;font-weight:400;\">Safe Limit Notification<br>" + cDate + "<br></div></div>";
+	st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"> <div style=\"padding: 30px 0; color: #555;line-height: 1.7;\">Hello, <br><br>The following account balances have exceeded the safe limit. Kindly review the transactions and make changes if necessary.<br></div></div>";
+	st = st + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"><table style=\"font-family:\"Trebuchet MS\", Arial, Helvetica, sans-serif; border-collapse: collapse;width: 100%;\"><tr style=\"nth-child(even){background-color:#32B4E2 ;}\"><th style=\" border: 1px solid #ddd; padding: 8px; padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #32B4E2 ; color: white;border: 1px solid #ddd;padding: 8px;\">S NO</th><th style=\" border: 1px solid #ddd;padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #32B4E2 ;color: white;border: 1px solid #ddd; padding: 8px;\">Account</th><th style=\"border: 1px solid #ddd;padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #32B4E2 ;color: white;border: 1px solid #ddd; padding: 8px;\">Safe Limit</th><th style=\" border: 1px solid #ddd;padding: 8px;padding-top: 12px;padding-bottom: 12px;text-align: left;background-color: #32B4E2 ;color: white;border: 1px solid #ddd; padding: 8px;\">Current Balance</th></tr>";
+	for each  accountID in accountsMap.keys()
+	{
+		account = accountsMap.get(accountID);
+		closingBalance = account.get("closing_balance");
+		temp = accountsCFMap.get(accountID);
+		accountName = temp.get("account_name");
+		softLimit = temp.get(cfSoftLimitPlaceholder);
+		lastUpdatedBalance = temp.get(cfLastUpdatedClosingBalancePlaceholder);
+		isChange = false;
+		if(!softLimit.isNull() && softLimit < closingBalance)
+		{
+			if(!lastUpdatedBalance.isNull())
+			{
+				if(lastUpdatedBalance < closingBalance)
+				{
+					j = j + 1;
+					accountUrl = "https://books.zoho" + dc + "/app/" + organizationID + "#/accountant/chartofaccounts/" + accountID;
+					st = st + "<tr><td style=\"border: 1px solid #ddd; padding: 8px;\">" + j + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\"><a href=" + accountUrl + ">  " + accountName + "</a></td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + softLimit + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + closingBalance + "</td></tr>";
+					isTrue = true;
+					isChange = true;
+				}
+				else if(lastUpdatedBalance > closingBalance)
+				{
+					j = j + 1;
+					accountUrl = "https://books.zoho" + dc + "/app/" + organizationID + "#/accountant/chartofaccounts/" + accountID;
+					st = st + "<tr><td style=\"border: 1px solid #ddd; padding: 8px;\">" + j + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\"><a href=" + accountUrl + ">  " + accountName + "</a></td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + softLimit + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + closingBalance + "</td></tr>";
+					isTrue = true;
+					isChange = true;
+				}
+			}
+			else
+			{
+				j = j + 1;
+				accountUrl = "https://books.zoho" + dc + "/app/" + organizationID + "#/accountant/chartofaccounts/" + accountID;
+				st = st + "<tr><td style=\"border: 1px solid #ddd; padding: 8px;\">" + j + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\"><a href=" + accountUrl + ">  " + accountName + "</a></td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + softLimit + "</td><td style=\"border: 1px solid #ddd; padding: 8px;\">" + closingBalance + "</td></tr>";
+				isTrue = true;
+				isChange = true;
+			}
+		}
+		if(isChange == true)
+		{
+			recordMap = Map();
+			cList = List();
+			cMap = Map();
+			cMap.put("api_name",cfLastUpdatedClosingBalancePlaceholder);
+			cMap.put("value",closingBalance);
+			cList.add(cMap);
+			recordMap.put("custom_fields",cList);
+			params = Map();
+			params.put("JSONString",recordMap);
+			bulkAccountListCategory.put(accountID,params);
+		}
+	}
+	st = st + "</table>";
+	st = st + "<br>Thank you,<div style=\"color: solid #ddd\">" + companyname + "</div></div></div><br>";
+	if(isTrue == true)
+	{
+		emailList = List();
+		emailList.add(zoho.adminuserid);
+		sendmail
+		[
+			from :zoho.adminuserid
+			to :emailList
+			subject :"Account Safe Limit has been exceeded in " + companyname
+			message :st
+		]
+		info "The email has been sent to " + emailList;
+		updatedAccountMap = Map();
+		if(bulkAccountListCategory.keys().size() > 0)
+		{
+			apiCount = 0;
+			for each  accountID in bulkAccountListCategory.keys()
+			{
+				apiCount = apiCount + 1;
+				paramsValue = bulkAccountListCategory.get(accountID);
+				url = apiUrl + "/chartofaccounts/" + accountID + "?organization_id=" + organizationID;
+				result = invokeurl
+				[
+					url :url
+					type :PUT
+					parameters:paramsValue
+					connection:"zbooks"
+				];
+				//info result;
+				account = result.get("chart_of_account");
+				accID = account.get("account_id");
+				msg = result.get("message");
+				updatedAccountMap.put(accID,msg);
+				if(apiCount % 4 == 0)
+				{
+					url = "https://postman-echo.com/delay/4";
+					delayResponseCall = invokeurl
+					[
+						url :url
+						type :GET
+					];
+				}
+			}
+		}
+		else
+		{
+			info "There are no accounts to be updated";
+		}
+		info updatedAccountMap;
+	}
+	else
+	{
+		info "There are no changes has been found, cannot send an alert";
+	}
+}
+else
+{
+	info "No accounts found";
+}
