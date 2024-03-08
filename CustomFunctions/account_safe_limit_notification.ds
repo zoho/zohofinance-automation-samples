@@ -2,7 +2,7 @@
 
   This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
 	
-  This function will help you to schedule an email when exceeds Safe Limits of an account. 
+  This function will help you schedule an email alert when the account balance exceeds the Safe limit.
 
   Create a connection by the name "zbooks" for the Zoho Books service.
   Please ensure to replace cf_safe_limit, cf_current_balance with account level custom field API name. 
