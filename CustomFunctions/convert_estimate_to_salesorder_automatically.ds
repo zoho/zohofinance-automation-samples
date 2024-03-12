@@ -27,6 +27,7 @@ estimateNumber = estimateDetails.get("estimate_number");
 discountType = estimateDetails.get("discount_type");
 discount = estimateDetails.get("discount");
 shippingCharge = estimateDetails.get("shipping_charge");
+shippingChargeTaxId = estimateDetails.get("shipping_charge_tax_id");
 adjustment = estimateDetails.get("adjustment");
 salespersonID = estimateDetails.get("salesperson_id");
 lineItems = estimateDetails.get("line_items").toList();
@@ -126,6 +127,8 @@ if(!cfList.isEmpty())
 if(shippingCharge != 0)
 {
 	json.put("shipping_charge", shippingCharge);
+	json.put("shipping_charge_tax_id", shippingChargeTaxId);
+
 }
 
 if(adjustment != 0)
