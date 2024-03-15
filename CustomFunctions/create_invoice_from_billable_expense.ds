@@ -1,0 +1,62 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function will help you to create an invoice when a billable expense is created in ZB.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module                    - Expense
+  Workflow Type             - Event Based
+  When a Purchase Order is  - Created
+  Filer the trigger         - billable is true
+  Actions                   - Type: Custom function; Name: Choose the custom function that you have created
+*/
+expenseID = expense.get("expense_id");
+organizationID = organization.get("organization_id");
+exp = zoho.books.getRecordsByID("expenses", organizationID, expenseID,"zbooks").get("expense");
+markupPercent = exp.get("markup_percent");
+lineItems = exp.get("line_items");
+billable = exp.get("is_billable");
+if ( billable == true ) 
+{
+	documents = exp.get("documents").toList();
+	docList = List();
+	if(documents.size() > 0)
+	{
+		for each document in documents
+		{
+			docMap = Map();
+			docMap.put("document_id", document.get("document_id"));
+			docList.add(docMap);
+		}
+	}
+	customerID = exp.get("customer_id");
+	lineItemList = List();
+	for each line in lineItems
+	{
+		lineMap = Map();
+		accountName = exp.get("account_name");
+		lineMap.put("name", accountName);
+		lineMap.put("description", today);
+		if ( !markupPercent.isNull() || markupPercent != 0 ) 
+        {
+			updatedAmount = line.get("amount").toDecimal() * markupPercent.toDecimal()/100;
+			lineMap.put("rate", updatedAmount + line.get("amount").toDecimal());
+        }
+		else 
+        {
+			lineMap.put("rate", line.get("amount"));
+        }
+		lineMap.put("tax_id", line.get("tax_id"));
+		lineMap.put("expense_id", expenseID);
+		lineItemList.add(lineMap);
+	}
+	json = Map();
+	json.put("customer_id", customerID);
+	json.put("documents", docList);
+	json.put("line_items", lineItemList);
+	createInvoice = zoho.books.createRecord("invoices", organizationID, json,"zbooks");
+	info createInvoice.get("message");
+	info json;
+}
