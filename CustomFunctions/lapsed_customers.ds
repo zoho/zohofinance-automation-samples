@@ -1,0 +1,215 @@
+/*
+This is a sample Custom Function written to be used in Custom Button of Zoho Books.
+
+This Custom Button will help you to send list of Lapsed customers to users.
+
+Please ensure to replace "cf_send_notification" with user level custom field API name. 
+
+Create a connection by the name "zbooks" for Zoho Books service.
+*/
+
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+dc = organization.get("data_center_extension");
+arraySize = 100;
+arraySize = arraySize - 1;
+pageList = "".rightpad(arraySize).replaceAll(" ",",").toList();
+page = 0;
+cDate = zoho.currentdate;
+daysValue = 90;
+userFieldAPIName = "cf_send_notification";
+title = "Inactive Customer Notification";
+subjectValue = "Lapsed customers - " + organization.get("name");
+messageContent = " below is the list of customers who have not made any purchases in the last " + daysValue + " day(s)";
+workBookName = "Inactive Contact List-" + cDate;
+startDate = cDate.subDay(daysValue);
+info startDate;
+startDate = startDate.toString("yyyy-MM-dd");
+endDate = cDate.toString("yyyy-MM-dd");
+customerList = List();
+customerMap = Map();
+AllCustomerMap = Map();
+executionMap = Map();
+for each  find in pageList
+{
+	page = page + 1;
+	url = apiUrl + "/customers?status=active&page=" + page + "&per_page=200&organization_id=" + organizationID;
+	response = invokeurl
+	[
+		url :url
+		type :GET
+		connection:"zbooks"
+	];
+	//info response;
+	contacts = response.get("contacts");
+	if(contacts.size() > 0)
+	{
+		customerList.addAll(contacts);
+	}
+	else
+	{
+		break;
+	}
+	if(page % 4 == 0)
+	{
+		url = "https://postman-echo.com/delay/4";
+		delayResponseCall = invokeurl
+		[
+			url :url
+			type :GET
+		];
+	}
+}
+if(customerList.size() > 0)
+{
+	for each  contact in customerList
+	{
+		customerID = contact.get("contact_id");
+		createdTime = contact.get("created_time").toString("yyyy-MM-dd");
+		diff = daysbetween(createdTime,cDate);
+		if(diff > daysValue)
+		{
+			customerMap.put(customerID,contact);
+		}
+	}
+}
+//info customerMap;
+invoiceRecordList = List();
+invoiceRecordMap = Map();
+page = 0;
+for each  find in pageList
+{
+	page = page + 1;
+	url = apiUrl + "/invoices?created_date_start=" + startDate + "&created_date_end=" + endDate + "&page=" + page + "&per_page=200&organization_id=" + organizationID;
+	response = invokeurl
+	[
+		url :url
+		type :GET
+		connection:"zbooks"
+	];
+	//info response;
+	invoices = response.get("invoices");
+	if(invoices.size() > 0)
+	{
+		invoiceRecordList.addAll(invoices);
+		for each  invoice in invoices
+		{
+			invoiceCustomerID = invoice.get("customer_id");
+			invoiceRecordMap.put(invoiceCustomerID,invoice.get("customer_name"));
+		}
+	}
+	else
+	{
+		break;
+	}
+	if(page % 4 == 0)
+	{
+		url = "https://postman-echo.com/delay/4";
+		delayResponseCall = invokeurl
+		[
+			url :url
+			type :GET
+		];
+	}
+}
+//info "invoiceRecordList=" + invoiceRecordList.size();
+if(invoiceRecordList.size() > 0)
+{
+	for each  customer in customerMap.keys()
+	{
+		//info customer;
+		if(invoiceRecordMap.get(customer).isNull())
+		{
+			executionMap.put(customer,customerMap.get(customer));
+		}
+		else
+		{
+			executionMap.remove(customer);
+		}
+	}
+	customerMap = executionMap;
+}
+if(customerMap.keys().size() > 0)
+{
+	count = 1;
+	recordList = List();
+	csv_file = "\"Customer Name\",\"Email\",\"Phone\",\"Mobile\"";
+	for each  contact in customerMap.keys()
+	{
+		temp = customerMap.get(contact);
+		customerName = temp.get("contact_name");
+		email = temp.get("email");
+		phone = temp.get("phone");
+		mobile = temp.get("mobile");
+		customerID = temp.get("contact_id");
+		status = "Inactive for more than " + daysValue + " days";
+		csv_file = csv_file + "\n\"" + customerName + "\",\"" + email + "\",\"" + phone + "\",\"" + mobile + "\"";
+		count = count + 1;
+	}
+	csv_file = csv_file.tofile("" + workBookName + ".csv");
+	mailStr = "";
+	mailStr = mailStr + "<div style=\"background: #6495ed;\"><div style=\"padding: 2% 3%;max-width: 150px;max-height:50px;\"></div></div><div style=\"padding:3%;text-align:center;background: #6495ed;\"><div style=\"color:#fff;font-size:20px;font-weight:400;\">" + title + "<br></div></div>";
+	mailStr = mailStr + "<div style=\"max-width:560px;margin:auto;padding: 0 3%;\"> <div style=\"padding: 30px 0; color: #555;line-height: 1.7;\">Hi, <br><br>Greetings! " + messageContent + ". <br></div></div>";
+	mailStr = mailStr + "<br><br><br>Regards, <div style=\"color: #8c8c8c; font-weight: 400\"></div><div style=\"color: #b1b1b1\">" + organization.get("name") + "</div></div></div><br>";
+	emailList = List();
+	getusers = invokeurl
+	[
+		url :apiUrl + "/users?filter_by=Status.Active&organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	//info getusers;
+	users = getusers.get("users");
+	for each  user in users
+	{
+		userEmail = user.get("email");
+		userID = user.get("user_id");
+		getuser = invokeurl
+		[
+			url :apiUrl + "/users/" + userID + "?organization_id=" + organizationID
+			type :GET
+			connection:"zbooks"
+		];
+		userDetails = getuser.get("user");
+		if(!userDetails.isNull())
+		{
+			custom_field_hash = userDetails.get("custom_field_hash");
+			if(!custom_field_hash.isNull())
+			{
+				isEnabled = custom_field_hash.get(userFieldAPIName);
+				if(isEnabled == true)
+				{
+					emailList.add(userEmail);
+				}
+			}
+		}
+	}
+	info emailList;
+	if(emailList.size() > 0)
+	{
+		sendmail
+		[
+			from :zoho.adminuserid
+			to :emailList
+			subject :subjectValue
+			message :mailStr
+			Attachments :file:csv_file
+		]
+		info "The email has been sent to " + emailList;
+		msg = "The email has been sent to " + emailList;
+	}
+	else
+	{
+		info "User list is empty";
+		msg = "User list is empty";
+	}
+}
+else
+{
+	info "There are no customers inactive for more than " + daysValue + " days";
+	msg = "There are no customers inactive for more than " + daysValue + " days";
+}
+resultMap = Map();
+resultMap.put("message",msg);
+resultMap.put("code",0);
+return resultMap;
