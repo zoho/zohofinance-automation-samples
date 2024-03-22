@@ -60,3 +60,4 @@ Every business is unique and each of them follows a specific workflow. While man
 44. [*To schedule an email if the closing balance of the account is higher than the soft limit*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_notification.ds)
 45. [*To send an email when exceeds the Safe Limits of an account*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_safe_limit_notification.ds)
 46. [*Create an Invoice From Billable Expense*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/create_invoice_from_billable_expense.ds)
+47. [*To send list of lapsed customers to users*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/lapsed_customers.ds)
