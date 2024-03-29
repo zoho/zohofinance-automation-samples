@@ -61,3 +61,4 @@ Every business is unique and each of them follows a specific workflow. While man
 45. [*To send an email when exceeds the Safe Limits of an account*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/account_safe_limit_notification.ds)
 46. [*Create an Invoice From Billable Expense*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/create_invoice_from_billable_expense.ds)
 47. [*To send list of lapsed customers to users*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/lapsed_customers.ds)
+48. [*To synchronize the custom field from Zoho Expense with Zoho Books.*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/sync_custom_field_from_ZE_to_ZB.ds)
