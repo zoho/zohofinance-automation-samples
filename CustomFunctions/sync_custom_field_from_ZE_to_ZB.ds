@@ -2,11 +2,12 @@
 
   This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
 	
-  This function is designed to synchronize the custom field from Zoho Expense with Zoho Books.
+  This is a sample script to be used to create a Scheduler in Zoho Books. The scheduler runs periodically to fetch custom fields' data from Zoho Expense and populate in Zoho Books
 
   Create a connection by the name "zbooks" for the Zoho Books service.
-  
-  Frquency                - Hourly
+  Also, create a connection by the name "zexpense" for the Zoho Expense.
+
+  Frequency               - Hourly
   Expires After           - Never expires
   
 */
