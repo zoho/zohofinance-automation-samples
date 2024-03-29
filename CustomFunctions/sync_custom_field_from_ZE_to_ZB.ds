@@ -1,0 +1,106 @@
+/*
+
+  This is a sample Custom Function written to be used in the scheduler automation of Zoho Books.
+	
+  This function is designed to synchronize the custom field from Zoho Expense with Zoho Books.
+
+  Create a connection by the name "zbooks" for the Zoho Books service.
+  
+  Frquency                - Hourly
+  Expires After           - Never expires
+  
+*/
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+info organization;
+apiUrl = organization.get("api_root_endpoint");
+getExpCustomFields = invokeurl
+[
+	url :apiUrl + "/settings/fields?entity=expense&organization_id=" + organizationID
+	type :GET
+	connection:"zbooks"
+];
+getExpCustomFields = getExpCustomFields.get("fields").toList();
+url = apiUrl + "/expenses?sort_column=created_time&sort_order=A&usestate=true&organization_id=" + organizationID;
+records = invokeurl
+[
+	url :url
+	type :GET
+	connection:"zbooks"
+];
+records = records.get("expenses");
+//info records;
+cDate = zoho.currentdate;
+eList = List();
+count = 0;
+for each  expense in records
+{
+	count = count + 1;
+	if(count % 25 == 0)
+	{
+		delayResponseCall = invokeurl
+		[
+			url :"https://httpstat.us/200?sleep=2000"
+			type :GET
+		];
+	}
+	expDate = expense.get("created_time").toString("yyyy-MM-dd");
+	expID = expense.get("expense_id");
+	diff = expDate.daysbetween(cDate);
+	info diff;
+	if(diff >= -1 && diff <= 1)
+	{
+		url = "https://www.zohoapis" + dc + "/expense/v1/expenses/" + expID + "?organization_id=" + organizationID;
+		response = invokeurl
+		[
+			url :url
+			type :GET
+			connection:"zexpense"
+		];
+		info response.get("message");
+		info "response=" + response;
+		response = response.get("expense");
+		customFields = response.get("custom_fields").toList();
+		if(!customFields.isNull())
+		{
+			cfList = List();
+			for each  findRecordCF in customFields
+			{
+				recordCF_label = findRecordCF.get("label");
+				recordCF_value = findRecordCF.get("value");
+				recordCF_datatype = findRecordCF.get("data_type");
+				info recordCF_label;
+				for each  findSOCF in getExpCustomFields
+				{
+					expCF_isActive = false;
+					expCF_dataType = 0;
+					expCF_label = 0;
+					expCF_value = "";
+					expCF_isActive = findSOCF.get("is_active");
+					expCF_dataType = findSOCF.get("data_type");
+					expCF_label = findSOCF.get("field_name_formatted");
+					if(expCF_isActive == true && recordCF_label == expCF_label && !recordCF_value.isNull() && expCF_dataType == recordCF_datatype)
+					{
+						cMap = Map();
+						cMap.put("label",expCF_label);
+						cMap.put("value",recordCF_value);
+						cfList.add(cMap);
+					}
+				}
+			}
+			json = Map();
+			json.put("custom_fields",cfList);
+			params = Map();
+			params.put("JSONString",json);
+			info params;
+			updateexpense = invokeurl
+			[
+				url :apiUrl + "/expenses/" + expID + "?organization_id=" + organizationID
+				type :PUT
+				parameters:params
+				connection:"zbooks"
+			];
+			info updateexpense.get("message");
+		}
+	}
+}
