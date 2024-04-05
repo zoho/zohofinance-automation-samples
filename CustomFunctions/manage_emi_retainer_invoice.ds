@@ -1,0 +1,70 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This function will help you to manage fixed installment payments using Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Retainer Invoice
+  Workflow Type        - Event Based
+  When Estimate is     - Edited
+  When any field is updated
+  Filter the triggers  - Status is paid. 
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+
+retainerInvoiceID = retainer_invoice.get("retainerinvoice_id");
+retainerInvoiceDate = retainer_invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+customerID = retainer_invoice.get("customer_id");
+apiEndPoint = organization.get("api_root_endpoint");
+retainerInvoice = zoho.books.getRecordsByID("retainerinvoices",organizationID,retainerInvoiceID,"zbooks").get("retainerinvoice");
+payments = retainerInvoice.get("payments").toMap();
+paymentId = payments.get("payment_id");
+retainerAmount = payments.get("amount");
+invoiceNumber = retainer_invoice.get("reference_number");
+if(!invoiceNumber.isNull())
+{
+	searchMap = Map();
+	searchMap.put("invoice_number",invoiceNumber);
+	searchMap.put("customer_id",customerID);
+	invoices = zoho.books.getRecords("invoices",organizationID,searchMap,"zbooks").get("invoices");
+	info invoices;
+	if(!invoices.isEmpty())
+	{
+		invoiceID = invoices.toMap().get("invoice_id");
+		invoice = zoho.books.getRecordsByID("invoices",organizationID,invoiceID,"zbooks").get("invoice");
+		invoiceBalance = invoice.get("balance");
+		retainerList = List();
+		imap = Map();
+		imap.put("payment_id",paymentId);
+		if(invoiceBalance <= retainerAmount)
+		{
+			imap.put("amount_applied",invoiceBalance);
+		}
+		else if(invoiceBalance > retainerAmount)
+		{
+			imap.put("amount_applied",retainerAmount);
+		}
+		retainerList.add(imap);
+		json = Map();
+		json.put("invoice_payments",retainerList);
+		params = Map();
+		params.put("JSONString",json);
+		applyRet = invokeurl
+		[
+			url :apiEndPoint + "/invoices/" + invoiceID + "/credits?organization_id=" + organizationID
+			type :POST
+			parameters:params
+			connection:"zbooks"
+		];
+		info applyRet;
+		info params;
+	}
+}
+else
+{
+	info "No invoice";
+}
