@@ -66,4 +66,5 @@ Every business is unique and each of them follows a specific workflow. While man
 
     a)[*Script for invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
 
-    b)[*script For Retainer Invoice](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
+    b)[*script For Retainer Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi_retainer_invoice.ds)
+
