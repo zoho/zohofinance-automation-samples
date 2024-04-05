@@ -63,4 +63,6 @@ Every business is unique and each of them follows a specific workflow. While man
 47. [*To send list of lapsed customers to users*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/lapsed_customers.ds)
 48. [*To synchronize the custom field from Zoho Expense with Zoho Books.*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/sync_custom_field_from_ZE_to_ZB.ds)
 49. [*To manage Fixed installment payments Script for invoice*]
-    a)[invoice script](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
+
+    a)[*Script for invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
+    b)[*script For Retainer Invoice](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
