@@ -8,7 +8,7 @@
 
   Module               - Retainer Invoice
   Workflow Type        - Event Based
-  When Estimate is     - Edited
+  When Invoice is     - Edited
   When any field is updated
   Filter the triggers  - Status is paid. 
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
