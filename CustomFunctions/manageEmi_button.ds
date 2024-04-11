@@ -1,0 +1,148 @@
+/*
+  This Custom Button will help you to manage fixed installment payments using Zoho Books.
+
+  Please ensure to replace 'cf_installments' with invoice level custom field api name
+  Also, replace '419492XXX001877001' with template id of Retainer invoice. 
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+*/
+resultMap = Map();
+msg = "";
+erroCode = 1;
+if(!EMI_PER.isNull())
+{
+	invoiceID = invoice.get("invoice_id");
+	invoicedate = invoice.get("date").toDate();
+	organizationID = organization.get("organization_id");
+	apiEndPoint = organization.get("api_root_endpoint");
+	PDFtemplateIdForRetainer = "419492XXX001877001";
+	installmentFieldApiName = "cf_installments"; 
+	intallmentsDone = invoice.get("custom_field_hash").toMap().get(installmentFieldApiName);
+	if(!intallmentsDone.isNull())
+	{
+		updatedInstallmentsPer = intallmentsDone.toDecimal() + EMI_PER.toDecimal();
+	}
+	else
+	{
+		updatedInstallmentsPer = EMI_PER;
+	}
+	invoiceBalance = invoice.get("balance");
+	installmentMonth = 0;
+	note = "Dear customer,\nTotal purchase amount = " + invoice.get("total") + "\nRemaining Balance = " + invoice.get("balance");
+	perMothEmi = invoice.get("total").toDecimal() * EMI_PER.toDecimal() / 100;
+	info perMothEmi;
+	if(invoiceBalance > perMothEmi)
+	{
+		invoiceNumber = invoice.get("invoice_number");
+		retainerFetchUrl = apiEndPoint + "/retainerinvoices?reference_number_contains=" + encodeUrl(invoiceNumber) + "&organization_id=" + organizationID + "&response_option=2";
+		getRelatedRetainers = invokeurl
+		[
+			url :retainerFetchUrl
+			type :GET
+			connection:"zbooks"
+		];
+		// info getRelatedRetainers;
+		installmentMonth = getRelatedRetainers.get("page_context").toMap().get("total");
+		if(installmentMonth == 0)
+		{
+			thisEmi = 1;
+		}
+		else
+		{
+			thisEmi = installmentMonth.toDecimal() + 1;
+		}
+		remaining = thisEmi.toDecimal();
+		remaininginstallment = remaining.toDecimal() + 1;
+		note = "Dear customer,\n\nTotal purchase amount = " + invoice.get("total") + "\nYou have a remaining balance of " + invoice.get("balance") + " to be paid in " + remaininginstallment;
+		if(invoiceBalance >= 0)
+		{
+			retainerMap = Map();
+			retainerMap.put("customer_id",invoice.get("customer_id"));
+			retainerMap.put("reference_number",invoice.get("invoice_number"));
+			lineList = List();
+			itemMap = Map();
+			itemMap.put("description","Installment " + thisEmi + " - " + today);
+			itemMap.put("rate",perMothEmi);
+			lineList.add(itemMap);
+			retainerMap.put("line_items",lineList);
+			retainerMap.put("notes",note);
+			retainerMap.put("template_id",PDFtemplateIdForRetainer);
+			createRI = zoho.books.createRecord("retainerinvoices",organizationID,retainerMap,"zbooks");
+			info createRI.get("message");
+			info retainerMap;
+			if(createRI.get("code") == 0)
+			{
+				msg = createRI.get("message");
+				erroCode = 0;
+				invoiceFieldUpdateMap = Map();
+				invoiceFieldUpdateMap.put("api_name",installmentFieldApiName);
+				invoiceFieldUpdateMap.put("value",updatedInstallmentsPer);
+				invoiceFieldUpdateList = List();
+				invoiceFieldUpdateList.add(invoiceFieldUpdateMap);
+				invoiceJson = Map();
+				invoiceJson.put("custom_fields",invoiceFieldUpdateList);
+				update = zoho.books.updateRecord("invoices",organizationID,invoiceID,invoiceJson,"zbooks");
+				info invoiceJson;
+				info update.get("message");
+				retainerInvoiceID = createRI.get("retainerinvoice").get("retainerinvoice_id");
+				customerID = invoice.get("customer_id");
+				contactDetails = invokeurl
+				[
+					url :apiEndPoint + "/contacts/" + customerID + "?organization_id=" + organizationID
+					type :GET
+					connection:"zbooks"
+				];
+				contactDetails = contactDetails.get("contact");
+				contactPersons = contactDetails.get("contact_persons").toList();
+				for each  findCP in contactPersons
+				{
+					primaryContacts = findCP.get("is_primary_contact");
+					if(primaryContacts == true)
+					{
+						email = findCP.get("email");
+					}
+				}
+				subject = "Your Monthly Installment Payment is Due for " + organization.get("name");
+				body = "Dear Customer,\n\nKindly note that your installment payment for this month is pending. Please take a moment to review the payable amount enclosed in the attached invoice and settle it at your earliest convenience.\n\nShould you have any questions or need further clarification, feel free to get in touch with us. \n\nRegards,\n" + user.get("name") + "\n" + organization.get("name");
+				json = Map();
+				tlist = List();
+				tlist.add(email);
+				json.put("to_mail_ids",tlist);
+				json.put("subject",subject);
+				json.put("body",body);
+				params = Map();
+				params.put("JSONString",json);
+				params.put("attach_pdf",true);
+				response = invokeurl
+				[
+					url :apiEndPoint + "/retainerinvoices/" + retainerInvoiceID + "/email?organization_id=" + organizationID
+					type :POST
+					parameters:params
+					connection:"zbooks"
+				];
+				info response;
+			}
+			else
+			{
+				msg = createRI.get("message");
+			}
+		}
+		else
+		{
+			msg = "Invoice balance should not be suffitient to create Retainer";
+		}
+	}
+	else
+	{
+		msg = "Emi should be less than invoice balance";
+	}
+}
+else
+{
+	msg = "Please give EMI percentage and try";
+}
+invoiceNumber = invoice.get("invoice_number");
+resultMap.put("message",msg);
+resultMap.put("code",erroCode);
+return resultMap;
