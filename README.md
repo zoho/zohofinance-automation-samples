@@ -67,4 +67,9 @@ Every business is unique and each of them follows a specific workflow. While man
     a)[*Script for invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi.ds)
 
     b)[*script For Retainer Invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manage_emi_retainer_invoice.ds)
+50. To manage Fixed installment payments Script for invoice using Custom Button.
+
+    a)[*Custom Button Script*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manageEmi_button.ds)
+
+    b)[*Related List Script*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manageEmi_relatedList.ds)
 
