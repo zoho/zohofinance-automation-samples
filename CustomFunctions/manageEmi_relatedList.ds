@@ -1,0 +1,56 @@
+/*
+
+  This Related List function will help you to maintain history of fixed installment payments.
+
+  Please ensure to replace 'cf_installments' with invoice level custom field api name
+  Create a connection by the name "zbooks" for Zoho Books service.
+  */
+organizationID = organization.get("organization_id");
+apiEndPoint = organization.get("api_root_endpoint");
+invoiceFieldApiName = "cf_installments";
+instalmentsDone = invoice.get("custom_field_hash").toMap().get(invoiceFieldApiName);
+if(!instalmentsDone.isNull())
+{
+	headerData = List();
+	headerData.add({"key":"retainer_invoice","value":"Associated Retainer Invoices"});
+	headerData.add({"key":"retainer_total","value":"Retainer Total"});
+	headerData.add({"key":"status","value":"Status"});
+	listData = List();
+	invoiceNumber = invoice.get("invoice_number");
+	retainerFetchUrl = apiEndPoint + "/retainerinvoices?reference_number_contains=" + encodeUrl(invoiceNumber) + "&organization_id=" + organizationID;
+	getRelatedRetainers = invokeurl
+	[
+		url :retainerFetchUrl
+		type :GET
+		connection:"zbooks"
+	];
+	info getRelatedRetainers;
+	retainerinvoices = getRelatedRetainers.get("retainerinvoices");
+	for each  retainer in retainerinvoices
+	{
+		details = Map();
+		details.put("retainer_invoice",retainer.get("retainerinvoice_number"));
+		details.put("retainer_total",retainer.get("total"));
+		details.put("status",retainer.get("status"));
+		listData.add(details);
+	}
+	lineValues = Map();
+	lineValues.put("retainer_invoice"," ");
+	lineValues.put("retainer_total"," ");
+	lineValues.put("status"," ");
+	listData.add(lineValues);
+	invoiceValues = Map();
+	invoiceValues.put("retainer_invoice","INVOICE TOTAL");
+	invoiceValues.put("retainer_total","INVOICE BALANCE IN AMOUNT");
+	invoiceValues.put("status","INVOICE BALANCE IN %");
+	listData.add(invoiceValues);
+	invoiceValues = Map();
+	invoiceValues.put("retainer_invoice",invoice.get("total"));
+	invoiceValues.put("retainer_total",invoice.get("balance"));
+	invoiceValues.put("status",100 - instalmentsDone.toDecimal());
+	listData.add(invoiceValues);
+}
+resultMap = Map();
+resultMap.put("header_context",headerData);
+resultMap.put("data",listData);
+return resultMap;
