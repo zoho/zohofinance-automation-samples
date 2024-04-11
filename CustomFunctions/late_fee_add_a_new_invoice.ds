@@ -32,8 +32,10 @@ customerID = invoice.get("customer_id");
 lateFeeAmount = invoice.get("sub_total").toDecimal() * LATEFEE_PERCENT / 100;
 invoiceNumber = invoice.get("invoice_number");
 
+apiEndPoint = organization.get("api_root_endpoint");
+
 accountsList = invokeUrl [
-    url: "https://books.zoho.com/api/v3/chartofaccounts?organization_id=" + organizationID
+    url: apiEndPoint + "/chartofaccounts?organization_id=" + organizationID
     type: GET
     connection: "zbooks"
 ];
@@ -69,7 +71,7 @@ params = Map();
 params.put("JSONString", json);
 
 createInvoice = invokeUrl [
-    url: "https://books.zoho.com/api/v3/invoices?organization_id=" + organizationID
+    url: apiEndPoint + "/invoices?organization_id=" + organizationID
     type: POST
     parameters: params
     connection: "zbooks"
@@ -93,7 +95,7 @@ cmt.put("description", invoiceDescription);
 cmtMap = Map();
 cmtMap.put("JSONString", cmt);
 addComment = invokeUrl [
-	url: "https://books.zoho.com/api/v3/invoices/" + invoiceID + "/comments?organization_id=" + organizationID
+	url: apiEndPoint + "/invoices/" + invoiceID + "/comments?organization_id=" + organizationID
 	type: POST
 	parameters: cmtMap
 	connection: "zbooks"
