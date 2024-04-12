@@ -16,7 +16,7 @@ if(!Percentage.isNull())
 	invoicedate = invoice.get("date").toDate();
 	organizationID = organization.get("organization_id");
 	apiEndPoint = organization.get("api_root_endpoint");
-	PDFtemplateIdForRetainer = "4194923000001877001";
+	PDFtemplateIdForRetainer = "419492XXX001877001";
 	installmentFieldApiName = "cf_installments";
 	intallmentsDone = invoice.get("custom_field_hash").toMap().get(installmentFieldApiName);
 	if(!intallmentsDone.isNull())
