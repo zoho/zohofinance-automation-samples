@@ -4,7 +4,7 @@
 
   Please ensure to replace 'cf_installments' with invoice level custom field api name
   Create a connection by the name "zbooks" for Zoho Books service.
-  */
+*/
 organizationID = organization.get("organization_id");
 apiEndPoint = organization.get("api_root_endpoint");
 invoiceFieldApiName = "cf_installments";
@@ -31,11 +31,11 @@ if(!instalmentsDone.isNull())
 		details = Map();
 		details.put("retainer_invoice",retainer.get("retainerinvoice_number"));
 		details.put("retainer_total",retainer.get("total"));
-		details.put("status",retainer.get("status"));
+		details.put("status",retainer.get("status").upper());
 		listData.add(details);
 	}
 	lineValues = Map();
-	lineValues.put("retainer_invoice"," ");
+	lineValues.put("retainer_invoice","INVOICE DETAILS");
 	lineValues.put("retainer_total"," ");
 	lineValues.put("status"," ");
 	listData.add(lineValues);
