@@ -72,4 +72,5 @@ Every business is unique and each of them follows a specific workflow. While man
     a)[*Custom Button Script*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manageEmi_button.ds)
 
     b)[*Related List Script*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manageEmi_relatedList.ds)
+51. [*Send Bulk Email From Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/bulk_email.ds)
 
