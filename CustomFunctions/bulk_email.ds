@@ -5,7 +5,6 @@ This Custom Button will help you to send bulk email from Zoho Books.
 
 Create a connection by the name "zbooks" for Zoho Books service.
 */
-
 organizationID = organization.get("organization_id");
 apiEndPoint = organization.get("api_root_endpoint");
 resultMap = Map();
@@ -26,7 +25,7 @@ if(!Template_Name.isNull())
 	for each  template in emailtemplates
 	{
 		name = template.get("name");
-		// 	info name;
+		// info name;
 		if(name.equalsIgnoreCase(Template_Name))
 		{
 			templateId = template.get("email_template_id");
@@ -53,16 +52,15 @@ if(!Template_Name.isNull())
 			i = i + 1;
 			customers = invokeurl
 			[
-				url :apiEndPoint + "/vendors?page=" + page + "&per_page=200&organization_id=" + organizationID
+				url :apiEndPoint + "/contacts?page=" + page + "&per_page=200&status=active&organization_id=" + organizationID
 				type :GET
 				connection:"zbooks"
 			];
 			customers = customers.get("contacts");
 			for each  findItems in customers
 			{
-				vendorID = findItems.get("contact_id");
 				email = findItems.get("email");
-				if(emailList.notcontains(vendorID) && !email.isNull())
+				if(emailList.notcontains(email) && !email.isNull())
 				{
 					emailList.add(email);
 				}
@@ -73,7 +71,8 @@ if(!Template_Name.isNull())
 			sendmail
 			[
 				from :zoho.adminuserid
-				to : emailList
+				to : zoho.adminuserid
+				bcc : emailList
 				subject :mailSubject
 				message :body
 			]
@@ -92,4 +91,3 @@ else
 resultMap.put("message",msg);
 resultMap.put("code",code);
 return resultMap;
-
