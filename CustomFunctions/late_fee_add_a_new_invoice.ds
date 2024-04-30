@@ -62,7 +62,6 @@ cfMap = Map();
 cfMap.put("api_name", LATEFEE_CF);
 cfMap.put("value", "True");
 cfList.add(cfMap);
-
 json = Map();
 json.put("customer_id", customerID);
 json.put("line_items", lineItem);
@@ -78,18 +77,25 @@ createInvoice = invokeUrl [
 ];
 
 success = createInvoice.get("code") == 0;
-createdInvoice = createInvoice.get("invoice");
-invoiceNumber = createdInvoice.get("invoice_number");
-
 if(success)
 {
+	createdInvoice = createInvoice.get("invoice");
+	invoiceNumber = createdInvoice.get("invoice_number");
 	invoiceDescription = "Late Fee Invoice has been created for Invoice#" + invoiceNumber;
+	url = apiEndPoint + "/invoices/" + invoiceID + "/email?organization_id=" + organizationID;
+	newInvoiceId = createdInvoice.get("invoice_id");
+	response = invokeurl
+	[
+		url :url
+		type :POST
+		connection:"zbooks"
+	];
+	info response;
 }
 else 
 {
 	invoiceDescription = "Late fee percentage field is empty. Late fee invoice has not been created";
 }
-
 cmt = Map();
 cmt.put("description", invoiceDescription);
 cmtMap = Map();
