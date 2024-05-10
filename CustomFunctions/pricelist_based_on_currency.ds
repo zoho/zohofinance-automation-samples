@@ -1,7 +1,7 @@
 /*
   This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
 	
-  This workflow will associate the pricelist to the contact (based on the currency) when a contact is created/edited in Zoho Books.
+  This workflow will associate the pricelist to the contact (based on the currency) when a contact is created in Zoho Books.
 
   Create a connection by the name "zbooks" for Zoho Books service.
 
