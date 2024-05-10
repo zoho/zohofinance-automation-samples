@@ -1,0 +1,67 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This workflow will associate the pricelist to the contact (based on the currency) when a contact is created/edited in Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Customers
+  Workflow Type        - Event Based
+  When Customer is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+customerID = customer.get("contact_id");
+companyName = customer.get("company_name");
+contactName= customer.get("contact_name");
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+//info organization;
+apiUrl=organization.get("api_root_endpoint");
+name=customer.get("contact_name");
+currencyCode=customer.get("currency_code");
+customerPriceListName=currencyCode+" Pricing List";
+searchParameter=Map();
+searchParameter.put("search_text",customerPriceListName);
+url = apiUrl + "/pricebooks?organization_id=" + organizationID;
+getPricelist = invokeurl
+[
+	url :url
+	type :GET
+	parameters:searchParameter
+	connection:"zbooks"
+];
+
+//info getPricelist;
+pricebooks=getPricelist.get("pricebooks");
+for each pricebook in pricebooks
+{
+	name=pricebook.get("name");
+	if(name.equalsIgnoreCase(customerPriceListName))
+	{
+		pricebookID=pricebook.get("pricebook_id");
+		break;
+	}
+}
+if(!pricebookID.isNull())
+{
+contactMap=Map();
+contactMap.put("contact_name",contactName);
+contactMap.put("pricebook_id",pricebookID);
+params=Map();
+params.put("JSONString",contactMap);
+info params;
+result = invokeurl
+[
+	url: apiUrl+"/contacts/"+customerID+"?organization_id="+organizationID
+	type: PUT
+	parameters: params
+connection:"zbooks"
+];
+info result;
+	
+}
+else
+{
+	info "Could not find the price list in Zoho Books with currency code::"+currencyCode;
+}
