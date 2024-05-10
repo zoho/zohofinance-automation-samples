@@ -74,4 +74,5 @@ Every business is unique and each of them follows a specific workflow. While man
     b)[*Related List Script*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/manageEmi_relatedList.ds)
 51. [*Send Bulk Email From Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/bulk_email.ds)
 52. [*Transaction level profitability for Quotes*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/quotes_transaction_level_profitability.ds)
+53. [*Price List based on Currency*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/pricelist_based_on_currency.ds)
 
