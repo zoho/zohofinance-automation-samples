@@ -75,4 +75,5 @@ Every business is unique and each of them follows a specific workflow. While man
 51. [*Send Bulk Email From Zoho Books*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/bulk_email.ds)
 52. [*Transaction level profitability for Quotes*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/quotes_transaction_level_profitability.ds)
 53. [*Price List based on Currency*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/pricelist_based_on_currency.ds)
+54. [*Transaction level profitability for Invoices*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/transaction_level_profitability_invoices.ds)
 
