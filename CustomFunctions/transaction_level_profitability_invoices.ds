@@ -1,0 +1,123 @@
+/*====================================================================
+This is a sample Custom Function written to be used in the Automation section of Zoho Books.
+
+The function calculates the profit margin of an invoice and populates the value in a custom field.
+
+Create an Invoice-level Custom field with the name "Total Margin" and Data Type as "Decimal".  
+Copy the API Field Name of the custom field that you have created and update the value of the variable "totalMarginPlaceholder". 
+Create a connection by the name "zbooks" for the Zoho Books service.
+
+Create Workflow as below
+
+Workflow name: Enter a suitable name of your choice  
+Module: Invoices
+Workflow type: Event Based
+When a contact is :Created or Edited
+Filter the triggers: (Optional)
+Actions: Type: Custom function; Name: Enter the name of your choice.
+====================================================================*/
+​
+invoiceID = invoice.get("invoice_id");​
+invoicedate = invoice.get("date").toDate();​
+organizationID = organization.get("organization_id");​
+customerID = invoice.get("customer_id");​
+currencyID = invoice.get("currency_id");​
+dc = organization.get("data_center_extension");​
+apiUrl = organization.get("api_root_endpoint");​
+orgCurrencyID = organization.get("currency_id");​
+subTotal = invoice.get("sub_total").toDecimal();​
+​
+totalMarginPlaceholder = "cf_total_margin";//Replace cf_total_margin with api name of the invoice 
+custom field.​
+​
+if(currencyID != orgCurrencyID)​
+{​
+  currentDate = zoho.currentdate;​
+  currentDate = invoicedate.toString("yyyy-MM-dd");​
+  url = apiUrl+"/settings/currencies/" + currencyID + "/exchangerates?from_date=" + 
+  currentDate + "&organization_id=" + organizationID;​
+  exchangeRate = invokeurl​
+  [​
+    url :url​
+    type :GET​
+    connection:"zbooks"​
+  ];​
+  exchangeRate = exchangeRate.get("exchange_rates").toMap();​
+  exchangeRate = exchangeRate.get("rate").round(3);​
+  exRate = exchangeRate.toDecimal();​
+  exchangeFlag = true;​
+}​
+invoiceUrl = apiUrl+"/invoices/editpage?invoice_id=" + invoiceID + "&organization_id=" + 
+organizationID;​
+invoiceDetails = invokeurl​
+[​
+  url :invoiceUrl​
+  type :GET​
+  connection:"zbooks"​
+];​
+invoiceDetails = invoiceDetails.get("invoice");​
+lineItems = invoiceDetails.get("line_items").toList();​
+totGmargin = 0;​
+for each findItem in lineItems​
+{​
+  perUnitDiscount = 0;​
+  itemSellingPrice = 0;​
+  itemPurchasePrice = 0;​
+  discountAmt = 0;​
+  gMargin = 0;​
+  iMap = Map();​
+  item = findItem.toMap();​
+  itemID = item.get("item_id");​
+  discount = findItem.get("discount");​
+  discountAmt = findItem.get("discount_amount");​
+  quantity = findItem.get("quantity").toDecimal();​
+  if(discountAmt.isNull())​
+  {​
+    discountAmt = 0;​
+  }​
+  else​
+  {​
+    perUnitDiscount = discountAmt / quantity;​
+    perUnitDiscount = perUnitDiscount.round(2);​
+  }​
+  if(exchangeFlag == true)​
+  {​
+    perUnitDiscount = perUnitDiscount * exRate;​
+  }​
+  getItemPurchasePrice = if(findItem.get("purchase_rate") != "",findItem.get("purchase_rate"),0);​
+  unitSalesRate = findItem.get("bcy_rate").toDecimal();​
+  if(getItemPurchasePrice.isNull())​
+  {​
+    unitPurchaseRate = 0;​
+  }​
+  else​
+  {​
+    unitPurchaseRate = getItemPurchasePrice.toDecimal();​
+  }​
+  unitMargin = unitSalesRate.toDecimal() - unitPurchaseRate;​
+  unitMargin = unitMargin - perUnitDiscount;​
+  totItemMargin = unitMargin * quantity;​
+  totGmargin = totGmargin + totItemMargin;​
+  totalProfitPer = (totGmargin / subTotal) * 100;​
+}​
+cMap = Map();​
+cList = List();​
+cMap.put("api_name",totalMarginPlaceholder);​
+cMap.put("value",totalProfitPer);​
+cList.add(cMap);​
+json = Map();​
+json.put("custom_fields",cList);​
+json.put("customer_id",customerID);​
+json.put("reason","The custom field has been updated");​
+params = Map();​
+params.put("JSONString",json);​
+updateUrl = apiUrl+"/invoices/" + invoiceID + "?organization_id=" + organizationID;​
+updateRecord = invokeurl​
+[​
+  url :updateUrl​
+  type :PUT​
+  parameters:params​
+  connection:"zbooks"​
+];​
+info updateRecord.get("message");​
+info params; 
