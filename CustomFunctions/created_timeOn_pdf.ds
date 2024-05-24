@@ -13,22 +13,25 @@
   Filter the triggers  - (Optional)
   Actions              - Type: Custom function; Name: Choose the custom function that you have created
 */
-customFieldApiName = "cf_creation_time";//Replace cf_creation_time with api name of custom field name
+customFieldApiName = "cf_created_time";//Replace cf_created_time with api name of custom field name
 invoiceID = invoice.get("invoice_id");
 invoicedate = invoice.get("date").toDate();
 organizationID = organization.get("organization_id");
 customerID = invoice.get("customer_id");
-invoiceDetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID).get("invoice");
-createdTime = invoiceDetails.get("created_time").toString("yyyy-MM-dd HH:MM");
+invoiceDetails = zoho.books.getRecordsByID("Invoices",organizationID,invoiceID,"zbooks").get("invoice");
+createdTime = invoiceDetails.get("created_time");
 info createdTime;
+createdTimeFormatted = createdTime.toTime("yyyy-MM-dd'T'HH:mm:ss").toString("yyyy-MM-dd HH:mm");
+info createdTimeFormatted;
 cMap = Map();
 cMap.put("api_name",customFieldApiName);
-cMap.put("value",createdTime);
+cMap.put("value",createdTimeFormatted);
 cList = List();
 cList.add(cMap);
 json = Map();
 json.put("customer_id",customerID);
 json.put("custom_fields",cList);
 json.put("reason","Created time has been update in the custom field");
-result = zoho.books.updateRecord("Invoices",organization.get("organization_id"),invoice.get("invoice_id"),json);
-info result;
+result = zoho.books.updateRecord("Invoices",organization.get("organization_id"),invoice.get("invoice_id"),json,"zbooks");
+info result.get("message");
+info json;
