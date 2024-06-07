@@ -1,0 +1,227 @@
+/*
+  This Custom Button will help you to convert Estimate to Sales Order in Bulk.
+
+  Please ensure to replace 'cf_reference' with item level custom field api name
+  Create a connection by the name "zbooks" for Zoho Books service.
+*/
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+apiUrl = organization.get("api_root_endpoint");
+cfItemRefernce = "cf_reference";
+//Replace cf_reference with item custom field
+cDate = zoho.currentdate;
+headerData = List();
+headerData.add({"key":"salesorder_number","value":"Salesorder Number"});
+headerData.add({"key":"salesorder_status","value":"Salesorder Status"});
+lineList = List();
+lineListMap = Map();
+customerCategoryMap = Map();
+listData = List();
+totalAdjustment = 0;
+totalshipping = 0;
+customerAdjustmentMap = Map();
+customershippingMap = Map();
+contactPersonMap = Map();
+for each  estimate in estimates
+{
+	estimateID = estimate.get("estimate_id");
+	estimatedate = estimate.get("date").toDate();
+	customerID = estimate.get("customer_id");
+	estimateDetails = invokeurl
+	[
+		url :apiUrl + "/estimates/" + estimateID + "?organization_id=" + organizationID
+		type :GET
+		connection:"zbooks"
+	];
+	estimateDetails = estimateDetails.get("estimate");
+	dis = estimateDetails.get("is_discount_before_tax");
+	//info estimateDetails;
+	cpList = List();
+	cpList = estimateDetails.get("contact_persons").toList();
+	info cpList;
+	if(!contactPersonMap.get(customerID).isNull())
+	{
+		contactPList = contactPersonMap.get(customerID);
+		contactPList.addAll(cpList);
+		contactPList = contactPList.distinct();
+		contactPersonMap.put(customerID,contactPList);
+	}
+	else
+	{
+		contactPList = List();
+		contactPList.addAll(cpList);
+		contactPersonMap.put(customerID,contactPList);
+	}
+	estimateNumber = estimateDetails.get("estimate_number");
+	discountType = estimateDetails.get("discount_type");
+	discount = estimateDetails.get("discount");
+	is_inclusive_tax = estimateDetails.get("is_inclusive_tax");
+	shippingCharge = estimateDetails.get("shipping_charge");
+	adjustment = estimateDetails.get("adjustment");
+	salespersonID = estimateDetails.get("salesperson_id");
+	lineItems = estimateDetails.get("line_items").toList();
+	documents = estimateDetails.get("documents");
+	if(!customerAdjustmentMap.get(customerID).isNull())
+	{
+		tempTotal = customerAdjustmentMap.get(customerID);
+		totalAdjustment = tempTotal + adjustment;
+		customerAdjustmentMap.put(customerID,totalAdjustment);
+	}
+	else
+	{
+		totalAdjustment = 0;
+		totalAdjustment = totalAdjustment + adjustment;
+		customerAdjustmentMap.put(customerID,totalAdjustment);
+	}
+	if(!customershippingMap.get(customerID).isNull())
+	{
+		tempTotal = customershippingMap.get(customerID);
+		totalshipping = tempTotal + shippingCharge;
+		customerAdjustmentMap.put(customerID,totalshipping);
+	}
+	else
+	{
+		totalshipping = 0;
+		totalshipping = totalshipping + shippingCharge;
+		customershippingMap.put(customerID,totalshipping);
+	}
+	for each  find in lineItems
+	{
+		lineMap = Map();
+		itemCustomFields = find.get("item_custom_fields").toList();
+		itemCF = List();
+		itemID = find.get("item_id");
+		qty = find.get("quantity");
+		rate = find.get("rate");
+		lineItemID = find.get("line_item_id");
+		tags = find.get("tags");
+		projectID = find.get("project_id");
+		for each  findCF in itemCustomFields
+		{
+			itemLab = findCF.get("label");
+			itemVal = findCF.get("value");
+			iMap = Map();
+			iMap.put("label",itemLab);
+			iMap.put("value",itemVal);
+			itemCF.add(iMap);
+		}
+		iMap = Map();
+		iMap.put("api_name",cfItemRefernce);
+		iMap.put("value",estimateNumber);
+		itemCF.add(iMap);
+		find.remove("item_custom_fields");
+		find.remove("custom_field_hash");
+		find.remove("line_item_id");
+		find.remove("item_order");
+		find.remove("item_total");
+		find.put("item_custom_fields",itemCF);
+		if(!customerCategoryMap.get(customerID).isNull())
+		{
+			iList = List();
+			iList = customerCategoryMap.get(customerID);
+			iList.add(find);
+			customerCategoryMap.put(customerID,iList);
+		}
+		else
+		{
+			iList = List();
+			iList.add(find);
+			customerCategoryMap.put(customerID,iList);
+		}
+	}
+}
+if(customerCategoryMap.keys().size() > 0)
+{
+	for each  customer in customerCategoryMap.keys()
+	{
+		details = Map();
+		customerID = customer;
+		lineList = customerCategoryMap.get(customer);
+		adjustment = customerAdjustmentMap.get(customer);
+		shippingCharge = customershippingMap.get(customer);
+		json = Map();
+		json.put("line_items",lineList.toList());
+		json.put("customer_id",customer);
+		json.put("date",cDate.toString("yyyy-MM-dd"));
+		json.put("contact_persons",contactPersonMap.get(customer));
+		if(adjustment > 0)
+		{
+			json.put("adjustment",adjustment);
+		}
+		if(shippingCharge > 0)
+		{
+			json.put("shipping_charge",shippingCharge);
+		}
+		info json;
+		params = Map();
+		params.put("JSONString",json);
+		info params;
+		createSO = invokeurl
+		[
+			url :apiUrl + "/salesorders?organization_id=" + organizationID
+			type :POST
+			parameters:params
+			connection:"zbooks"
+		];
+		info createSO;
+		//msg=createSO.get("message");
+		soCode = createSO.get("code");
+		listData = List();
+		details = Map();
+		if(soCode != 0)
+		{
+			msg = "Failed to create a salesorder";
+		}
+		else
+		{
+			soNumber = createSO.get("salesorder").get("salesorder_number");
+			msg = "Failed to create a salesorder";
+			salesorderID = createSO.get("salesorder").get("salesorder_id");
+			details.put("salesorder_status",createSO.get("message"));
+			details.put("salesorder_number",{"value":soNumber,"isExternal":true,"link":"https://books.zoho" + dc + "/app/" + organizationID + "#/salesorders/" + salesorderID});
+			msg = "The salesorder <a href=https://books.zoho" + dc + "/app/" + organizationID + "#/salesorders/" + salesorderID + ">" + soNumber + "</a> has been created";
+			referenceEstimateList = List();
+			for each  estimate in estimates
+			{
+				estID = estimate.get("estimate_id");
+				estNumber = estimate.get("estimate_number");
+				msgReference = "<a href=https://books.zoho" + dc + "/app/" + organizationID + "#/quotes/" + estID + ">" + estNumber + "</a>";
+				referenceEstimateList.add(msgReference);
+			}
+			cmt = Map();
+			cmt.put("description","<div><p>Reference Estimates: " + referenceEstimateList + "</p></div>[source:script]");
+			cmtMap = Map();
+			cmtMap.put("JSONString",cmt);
+			comment = invokeurl
+			[
+				url :apiUrl + "/salesorders/" + salesorderID + "/comments?organization_id=" + organizationID
+				type :POST
+				parameters:cmtMap
+				connection:"zbooks"
+			];
+			info "cmt==" + comment;
+		}
+		for each  estimate in estimates
+		{
+			estimateID = estimate.get("estimate_id");
+			details.put("salesorder_status",createSO.get("message"));
+			cmt = Map();
+			cmt.put("description","<div><p>" + msg + "</p></div>[source:script]");
+			cmtMap = Map();
+			cmtMap.put("JSONString",cmt);
+			comment = invokeurl
+			[
+				url :apiUrl + "/estimates/" + estimateID + "/comments?organization_id=" + organizationID
+				type :POST
+				parameters:cmtMap
+				connection:"zbooks"
+			];
+			info "cmt==" + comment;
+		}
+	}
+}
+listData.add(details);
+resultMap = Map();
+resultMap.put("header_context",headerData);
+resultMap.put("data",listData);
+return resultMap;
