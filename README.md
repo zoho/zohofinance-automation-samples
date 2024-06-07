@@ -77,4 +77,5 @@ Every business is unique and each of them follows a specific workflow. While man
 53. [*Price List based on Currency*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/pricelist_based_on_currency.ds)
 54. [*Transaction level profitability for Invoices*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/transaction_level_profitability_invoices.ds)
 55. [*Creation time of invoice on PDF*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/created_timeOn_pdf.ds)
+56. [*Estimate to Sales Order in Bulk*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/est_to_so_in_bulk.ds)
 
