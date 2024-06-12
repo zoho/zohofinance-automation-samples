@@ -1,0 +1,19 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Function will enable ach payment option when a customer is created.
+    
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Customers
+  Workflow Type        - Event Based
+  When customer is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+customerID = customer.get("contact_id");
+organizationID = organization.get("organization_id");
+json = Map();
+json.put("ach_supported",true);	
+update = zoho.books.updateRecord("contacts",organizationID,customerID,json,"zbooks");
+info update;
