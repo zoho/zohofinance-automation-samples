@@ -1,0 +1,49 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Function will help you to enable checkboxes of all contact persons associated. 
+    
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+contactID = invoice.get("customer_id");
+apiEndPoint = organization.get("api_root_endpoint");
+con = zoho.books.getRecordsByID("Contacts",organizationID,contactID,"zbooks").get("contact");
+contactPersons = con.get("contact_persons").toList();
+contactList = List();
+for each  find in contactPersons
+{
+	contact_person_id = find.get("contact_person_id");
+	info contact_person_id;
+	if(!contact_person_id.isNull())
+	{
+		contactList.add(contact_person_id);
+	}
+}
+imap = Map();
+imap.put("contact_persons",contactList);
+update = zoho.books.updateRecord("Invoices",organizationID,invoiceID,imap,"zbooks");
+info update;
+info imap;
+if ( update.get("code") == 0 ) 
+{
+	updatedInvoiceId = update.get("invoice").get("invoice_id");
+	params3 = Map();
+	params3.put("organization_id",organizationID);
+	response = invokeurl
+	[
+		url : apiEndPoint + "/invoices/" + updatedInvoiceId + "/email"
+		type :POST
+		parameters:params3
+		connection:"zbooks"
+	];
+	info response;
+}
