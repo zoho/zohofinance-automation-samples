@@ -79,4 +79,5 @@ Every business is unique and each of them follows a specific workflow. While man
 55. [*Creation time of invoice on PDF*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/created_timeOn_pdf.ds)
 56. [*Estimate to Sales Order in Bulk*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/est_to_so_in_bulk.ds)
 57. [*To enable Ach payment*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/enable_ach_payment.ds)
+58. [*To sort line items based on item category*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/sort_line_items.ds)
 
