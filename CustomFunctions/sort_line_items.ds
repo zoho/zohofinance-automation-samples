@@ -1,0 +1,101 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function will sort the line items based on category of items.  
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoice
+  Workflow Type        - Event Based
+  When Estimate is     - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+lineItems = invoice.get("line_items");
+OtherCategoryName = "Others";
+categoryList = List();
+finalList = Map();
+lineMap = Map();
+otherMap = Map();
+for each  line in lineItems
+{
+	itemId = line.get("item_id");
+	info itemId;
+	item = zoho.books.getRecordsByID("items",organizationID,itemId,"zbooks").get("item");
+	category = item.get("category_name");
+	lineList = List();
+	itemcfList = List();
+	if(!categoryList.contains(category) && !category.isNull())
+	{
+		lineMap.put(category,line.get("line_item_id"));
+	}
+	else if(!categoryList.contains(OtherCategoryName) && category.isNull())
+	{
+		otherMap.put(OtherCategoryName,line.get("line_item_id"));
+	}
+	else
+	{
+		compine = List();
+		if(category == "")
+		{
+			lineList = otherMap.get(OtherCategoryName);
+		}
+		else
+		{
+			lineList = lineMap.get(category);
+		}
+		compine.addAll(lineList);
+		compine.addAll(line.get("line_item_id"));
+		if(category == "")
+		{
+			otherMap.put(OtherCategoryName,compine);
+		}
+		else
+		{
+			lineMap.put(category,compine);
+		}
+	}
+	if(!category.isNull())
+	{
+		categoryList.add(category);
+	}
+	else
+	{
+		categoryList.add(OtherCategoryName);
+	}
+}
+lineMap.putAll(otherMap);
+finalLineList = List();
+item_order = 1;
+keyCount = 0;
+for each  lineMapping in lineMap.keys()
+{
+	currenLineItemList = lineMap.get(lineMapping);
+	keyName = lineMapping.keys();
+	if(keyName != OtherCategoryName)
+	{
+		keyCount = keyCount + 1;
+	}
+	for each  currentLineItem in currenLineItemList
+	{
+		newlineitemMap = Map();
+		newlineitemMap.put("item_order",item_order);
+		newlineitemMap.put("header_name",lineMapping);
+		newlineitemMap.put("line_item_id",currentLineItem);
+		finalLineList.add(newlineitemMap);
+		item_order = item_order + 1;
+	}
+}
+if(keyCount > 0)
+{
+	json = Map();
+	json.put("customer_id",invoice.get("customer_id"));
+	json.put("line_items",finalLineList);
+	update = zoho.books.updateRecord("invoices",organizationID,invoiceID,json,"zbooks");
+	info update.get("message");
+	info json;
+}
