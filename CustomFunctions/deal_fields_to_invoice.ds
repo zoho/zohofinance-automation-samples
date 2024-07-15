@@ -1,0 +1,118 @@
+/*
+
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This custom function automatically fetches the value of a field from deals in Zoho CRM to the related invoices in Zoho Books.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - invoice
+  Workflow Type        - Event Based
+  When invoice is     - Created or Edited
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+
+*/
+invoiceID = invoice.get("invoice_id");
+organizationID = organization.get("organization_id");
+customerID = invoice.get("customer_id");
+dc = organization.get("data_center_extension");
+apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
+crmAPIUrl = "https://www.zohoapis" + dc + "/crm/";
+invoiceDetails = zoho.books.getRecordsByID("invoices", organizationID, invoiceID, "zbooks").get("invoice");
+dealID = invoiceDetails.get("zcrm_potential_id");
+dealsFieldsCategoryMap = Map();
+
+if(!dealID.isNull())
+{
+	dealsDetails = zoho.crm.getRecordById("Deals", dealID, "zcrm_connection");
+	dealsFields = invokeurl
+	[
+		url: crmAPIUrl + "v2.2/settings/layouts?module=Deals"
+		type: GET
+		connection: "zcrm_connection"
+	];
+	layouts = dealsFields.get("layouts");
+	
+if(layouts.size() > 0)
+	{
+		for each section in layouts
+		{
+			sections = section.get("sections");
+			if(sections.size() > 0)
+			{
+				for each section in sections
+				{
+					dealInfo = section.get("display_label");
+					if(dealInfo.equalsIgnoreCase("Deal Information"))
+					{
+						fields = section.get("fields");
+						for each field in fields
+						{
+							isCustomField = field.get("custom_field");
+							displayName = field.get("field_label");
+							apiName = field.get("api_name");
+							if(isCustomField)
+							{
+			dealsFieldsCategoryMap.put(displayName, apiName);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		info "Could not find the layouts";
+	}
+	
+info dealsFieldsCategoryMap;
+	
+if(dealsFieldsCategoryMap.keys().size() > 0)
+	{
+		invoiceCustomFields = invokeurl
+		[
+			url: apiUrl + "settings/fields?entity=invoice&organization_id=" + organizationID
+			type: GET
+			connection: "zbooks"
+		];
+		invoiceCustomFields = invoiceCustomFields.get("fields").toList();
+		cfList = List();
+		for each parentCF in dealsFieldsCategoryMap.keys()
+		{
+			parentCF_label = parentCF;
+			parentCF_APIName = dealsFieldsCategoryMap.get(parentCF);
+			parentCF_value = dealsDetails.get(parentCF_APIName);
+			for each invoiceCF in invoiceCustomFields
+			{
+				estCF_isActive = invoiceCF.get("is_active");
+				estCF_label = invoiceCF.get("field_name_formatted");
+				if(estCF_isActive && parentCF_label == estCF_label && !parentCF_value.isNull())
+				{
+					cMap = Map();
+					cMap.put("label", estCF_label);
+					cMap.put("value", parentCF_value);
+					cfList.add(cMap);
+				}
+			}
+		}
+		json = Map();
+		json.put("custom_fields", cfList);
+		json.put("customer_id", customerID);
+		updateJson = Map();
+		updateJson.put("JSONString", json);
+		res = invokeurl
+		[
+			url: apiUrl + "invoices/" + invoiceID + "?organization_id=" + organizationID
+			type: PUT
+			parameters: updateJson
+			connection: "zbooks"
+		];
+		info res.get("message");
+	}
+}
+else
+{
+	info "CRM Deal ID is empty";
+}
