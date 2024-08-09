@@ -16,7 +16,7 @@
 estimateID = estimate.get("estimate_id");
 estimatedate = estimate.get("date").toDate();
 organizationID = organization.get("organization_id");
-contactLevelFieldApiName = "cf_new_num";//Replace Contact_Field_Api_Name with contact level custom field api name in the script.
+contactLevelFieldApiName = "Contact_Field_Api_Name";//Replace Contact_Field_Api_Name with contact level custom field api name in the script.
 customerId = estimate.get("customer_id");
 contact = zoho.books.getRecordsByID("contacts", organizationID, customerId,"zbooks").get("contact");
 fieldValue = contact.get(contactLevelFieldApiName);
