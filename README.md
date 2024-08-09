@@ -81,4 +81,5 @@ Every business is unique and each of them follows a specific workflow. While man
 57. [*To enable Ach payment*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/enable_ach_payment.ds)
 58. [*To sort line items based on item category*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/sort_line_items.ds)
 59. [*Custom Calculation Multiple fields*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/customCalculation_with_multiple_fields.ds)
+60. [*Custom Function to transfer the value from a custom field at the contact level to the terms and conditions section of an Estimate*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_terms.ds)
 
