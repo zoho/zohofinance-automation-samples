@@ -1,0 +1,28 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  Custom Function to transfer the value from a custom field at the contact level to the terms and conditions section of a salesorder.
+
+  Please ensure to replace[Contact_Field_Api_Name] Contact level custom field api names in the script.
+  
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - salesorders
+  Workflow Type        - Event Based
+  When salesorder is   - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+salesorderID = salesorder.get("salesorder_id");
+salesorderdate = salesorder.get("date").toDate();
+organizationID = organization.get("organization_id");
+contactLevelFieldApiName = "cf_new_num";//Replace Contact_Field_Api_Name with contact level custom field api name in the script.
+customerId = salesorder.get("customer_id");
+contact = zoho.books.getRecordsByID("contacts", organizationID, customerId,"zbooks").get("contact");
+fieldValue = contact.get(contactLevelFieldApiName);
+json = Map();
+json.put("terms", fieldValue);
+json.put("reason", "Update Terms");
+update = zoho.books.updateRecord("salesorders", organizationID, salesorderID, json,"zbooks");
+info update.get("message");
+info json;
