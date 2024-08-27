@@ -27,13 +27,12 @@ ITEM_NAME = "Credit Card Fee";     // Replace this with your requirement
 invoiceID = invoice.get("invoice_id");
 organizationID = organization.get("organization_id");
 customerID = invoice.get("customer_id");
-dc = organization.get("data_center_extension");
-apiUrl = "https://books.zoho" + dc + "/api/v3/";
+apiUrl = organization.get("api_root_endpoint");
 invoiceDetails = zoho.books.getRecordsByID("invoices", organizationID, invoiceID, "zbooks").get("invoice");
 fee = invoice.get("sub_total").toDecimal() * (SURCHARGE_PERCENTAGE / 100);
 accountDetails = invokeurl
 [
-	url: apiUrl + "chartofaccounts?account_name_contains=" + encodeUrl(ACCOUNT_NAME) + "&organization_id=" + organizationID
+	url: apiUrl + "/chartofaccounts?account_name_contains=" + encodeUrl(ACCOUNT_NAME) + "&organization_id=" + organizationID
 	type: GET
 	connection: "zbooks"
 ];
@@ -41,7 +40,7 @@ accounts = accountDetails.get("chartofaccounts");
 accountID = accounts.toMap().get("account_id");
 taxDetails = invokeurl
 [
-	url: apiUrl + "settings/taxes?organization_id=" + organizationID
+	url: apiUrl + "/settings/taxes?organization_id=" + organizationID
 	type: GET
 	connection: "zbooks"
 ];
@@ -73,7 +72,6 @@ pMap.put("rate", fee);
 pMap.put("tax_id", taxID);
 pMap.put("account_id", accountID);
 iList.add(pMap);
-
 json = Map();
 json.put("customer_id", customerID);
 json.put("line_items", iList);
