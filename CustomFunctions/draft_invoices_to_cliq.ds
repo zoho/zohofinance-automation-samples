@@ -17,10 +17,10 @@ dateToday = today.toString("yyyy-MM-dd");
 organizationID = organization.get("organization_id");
 dc = organization.get("data_center_extension");
 channelUniqueName = "testchanelt";
-
+apiUrl = organization.get("api_root_endpoint");
 draftInvs = invokeurl
 [
-	url :"https://books.zoho" + dc + "/api/v3/invoices?created_date_start=" + dateToday + "&created_date_end=" + dateToday + "&status=draft&organization_id=" + organizationID
+	url :apiUrl + "/invoices?created_date_start=" + dateToday + "&created_date_end=" + dateToday + "&status=draft&organization_id=" + organizationID
 	type :GET
 	connection:"zbooks"
 ];
