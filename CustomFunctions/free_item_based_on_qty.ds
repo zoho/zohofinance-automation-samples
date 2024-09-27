@@ -1,0 +1,188 @@
+/*
+  This is a sample Custom Function written to be used in Workflow automation of Zoho Books.
+	
+  This Custom Function will help you to add free item based on quantity.
+
+  Create a connection by the name "zbooks" for Zoho Books service.
+
+  Module               - Invoices
+  Workflow Type        - Event Based
+  When Invoice is      - Created
+  Filter the triggers  - (Optional)
+  Actions              - Type: Custom function; Name: Choose the custom function that you have created
+*/
+invoiceID = invoice.get("invoice_id");
+invoiceNumber = invoice.get("invoice_number");
+invoicedate = invoice.get("date").toDate();
+organizationID = organization.get("organization_id");
+apiUrl = organization.get("api_root_endpoint");
+cfItemPlaceholder = "cf_free_item";
+//Replace cf_free_item with api name of the item custom field 
+cfItemTempIDPlaceholder = "cf_is_added";
+//Replace cf_is_added with api name of the item custom field 
+freeItemQTY = 5;
+//replace 5 with limit
+cDate = zoho.currentdate;
+invoice = zoho.books.getRecordsByID("invoices",organizationID,invoiceID,"zbooks").get("invoice");
+lineItems = invoice.get("line_items");
+batchValue = 100;
+indexValue = 1;
+bulkItemListCategory = Map();
+bulkItemList = List();
+productMap = Map();
+sortedList = List();
+for each  item in lineItems
+{
+	itemID = item.get("item_id");
+	lineItemID = item.get("line_item_id");
+	itemCF = item.get("item_custom_fields");
+	isTrue = false;
+	for each  cf in itemCF
+	{
+		placeHolder = cf.get("placeholder");
+		if(placeHolder.equalsIgnoreCase(cfItemTempIDPlaceholder))
+		{
+			isTrue = cf.get("value");
+		}
+	}
+	if(!itemID.isNull() && isTrue == false)
+	{
+		if(!bulkItemListCategory.get(indexValue).isNull())
+		{
+			getListItems = bulkItemListCategory.get(indexValue);
+			if(getListItems.size() < batchValue)
+			{
+				bulkItemList.add(itemID);
+				bulkItemListCategory.put(indexValue,bulkItemList);
+			}
+			else
+			{
+				bulkItemList = List();
+				bulkItemList.add(itemID);
+				indexValue = indexValue + 1;
+				bulkItemListCategory.put(indexValue,bulkItemList);
+			}
+		}
+		else
+		{
+			bulkItemList.add(itemID);
+			bulkItemListCategory.put(indexValue,bulkItemList);
+		}
+	}
+	if(isTrue == false)
+	{
+		sortedList.add(item);
+	}
+}
+if(bulkItemListCategory.keys().size() > 0)
+{
+	for each  record in bulkItemListCategory.keys()
+	{
+		itemList = bulkItemListCategory.get(record);
+		itemList = itemList.distinct();
+		url = apiUrl + "/itemdetails?item_ids=" + itemList + "&organization_id=" + organizationID;
+		info url;
+		response = invokeurl
+		[
+			url :url
+			type :GET
+			connection:"zbooks"
+		];
+		//info response;
+		items = response.get("items");
+		if(items.size() > 0)
+		{
+			for each  product in items
+			{
+				produtctID = product.get("item_id");
+				vendorID = product.get("vendor_id");
+				customFields = product.get("custom_fields");
+				pID = "";
+				for each  field in customFields
+				{
+					placeHolder = field.get("placeholder");
+					if(placeHolder.equalsIgnoreCase(cfItemPlaceholder))
+					{
+						pID = field.get("value");
+					}
+				}
+				productMap.put(produtctID,pID);
+			}
+		}
+	}
+}
+info productMap;
+info sortedList;
+if(productMap.keys().size() > 0)
+{
+	itemOrder = 0;
+	iList = List();
+	for each  item in sortedList
+	{
+		lineItemMap = Map();
+		itemID = item.get("item_id");
+		order = item.get("item_order");
+		qty = item.get("quantity");
+		lineItemID = item.get("line_item_id");
+		itemCF = item.get("item_custom_fields");
+		itemCFList = List();
+		lineItemTempMapMap = Map();
+		lineItemTempMapMap.put("line_item_id",lineItemID);
+		lineItemTempMapMap.put("item_order",itemOrder);
+		iList.add(lineItemTempMapMap);
+		for each  cf in itemCF
+		{
+			placeHolder = cf.get("placeholder");
+			val = cf.get("value");
+			itemcfMap = Map();
+			itemcfMap.put("api_name",placeHolder);
+			itemcfMap.put("value",val);
+			itemCFList.add(itemcfMap);
+		}
+		if(!itemID.isNull() && freeItemQTY <= qty)
+		{
+			serviceItemID = productMap.get(itemID);
+			if(!serviceItemID.isNull())
+			{
+				itemOrder = itemOrder + 1;
+				lineItemTempMapMap = Map();
+				lineItemTempMapMap.put("item_id",serviceItemID);
+				lineItemTempMapMap.put("description","Free Item");
+				lineItemTempMapMap.put("rate",0);
+				lineItemTempMapMap.put("item_order",itemOrder);
+				itemcfMap = Map();
+				itemcfMap.put("api_name",cfItemTempIDPlaceholder);
+				itemcfMap.put("value",true);
+				itemCFList.add(itemcfMap);
+				lineItemTempMapMap.put("item_custom_fields",itemCFList);
+				iList.add(lineItemTempMapMap);
+			}
+			info "INNN";
+		}
+		itemOrder = itemOrder + 1;
+	}
+	json = Map();
+	json.put("line_items",iList);
+	info json;
+	response = zoho.books.updateRecord("invoices",organizationID,invoiceID,json,"zbooks");
+	info response.get("message");
+	msg = response.get("message");
+	code = response.get("code");
+	if ( code == 0 ) 
+    {
+		params3 = Map();
+		params3.put("organization_id",organizationID);
+		sendInv = invokeurl
+		[
+			url : apiUrl + "/invoices/" + invoiceID + "/email"
+			type :POST
+			parameters:params3
+			connection:"zbooks"
+		];
+		info sendInv;
+    }
+}
+else
+{
+	info "no items";
+}
