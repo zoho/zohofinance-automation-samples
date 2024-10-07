@@ -37,7 +37,10 @@ accountDetails = invokeurl
 	connection: "zbooks"
 ];
 accounts = accountDetails.get("chartofaccounts");
-accountID = accounts.toMap().get("account_id");
+if ( !accounts.isEmpty() ) 
+{
+	accountID = accounts.toMap().get("account_id");
+}
 taxDetails = invokeurl
 [
 	url: apiUrl + "/settings/taxes?organization_id=" + organizationID
