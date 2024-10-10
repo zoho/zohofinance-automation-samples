@@ -84,4 +84,5 @@ Every business is unique and each of them follows a specific workflow. While man
 60. [*Custom Function to transfer the value from a custom field at the contact level to the terms and conditions section of an Estimate*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/update_terms.ds)
 61. [*Automatically generate invoices for unbilled timesheets at regular intervals*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/invoice_creation_for_unbilled_timesheet.ds)
 62. [*Automatically add free item based on quantity*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/free_item_based_on_qty.ds)
+63. [*To show associated estimate in the invoice*](https://github.com/zoho/zohofinance-automation-samples/blob/main/CustomFunctions/show_estimate_in_invoice.ds)
 
