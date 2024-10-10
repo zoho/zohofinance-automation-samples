@@ -3,8 +3,8 @@ apiEndPoint = organization.get("api_root_endpoint");
 dc = organization.get("data_center_extension");
 organizationID = organization.get("organization_id");
 headerData = List();
-headerData.add({"key":"estimate_number","value":"Estimate Number"});
-headerData.add({"key":"amount","value":"Amount"});
+headerData.add({"key":"estimate_number","value":"QUOTE NUMBER"});
+headerData.add({"key":"amount","value":"AMOUNT"});
 invoiceDetails = zoho.books.getRecordsByID("invoices",organizationID,invoice.get("invoice_id")).get("invoice");
 estimateId = invoiceDetails.get("estimate_id");
 listData = List();
@@ -13,9 +13,10 @@ if(!estimateId.isNull())
 	estimate = zoho.books.getRecordsByID("Estimates",organizationID,estimateId).get("estimate");
 	estimateNumber = estimate.get("estimate_number");
 	totalAmount = estimate.get("total");
+	currencySymbol = estimate.get("currency_symbol");
 	details = Map();
 	details.put("estimate_number",{"value":estimateNumber,"link":"https://books.zoho" + dc + "/app/" + organizationID + "#/quotes/" + estimateId});
-	details.put("amount",totalAmount);
+	details.put("amount",currencySymbol + totalAmount);
 	listData.add(details);
 }
 resultMap = Map();
