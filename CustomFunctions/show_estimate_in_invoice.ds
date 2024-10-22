@@ -5,7 +5,7 @@ organizationID = organization.get("organization_id");
 headerData = List();
 headerData.add({"key":"estimate_number","value":"QUOTE NUMBER"});
 headerData.add({"key":"amount","value":"AMOUNT"});
-invoiceDetails = zoho.books.getRecordsByID("invoices",organizationID,invoice.get("invoice_id")).get("invoice");
+invoiceDetails = zoho.books.getRecordsByID("invoices",organizationID,invoice.get("invoice_id"),"zbooks").get("invoice");
 estimateId = invoiceDetails.get("estimate_id");
 listData = List();
 if(!estimateId.isNull())
