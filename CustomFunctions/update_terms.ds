@@ -19,7 +19,7 @@ organizationID = organization.get("organization_id");
 contactLevelFieldApiName = "Contact_Field_Api_Name";//Replace Contact_Field_Api_Name with contact level custom field api name in the script.
 customerId = estimate.get("customer_id");
 contact = zoho.books.getRecordsByID("contacts", organizationID, customerId,"zbooks").get("contact");
-fieldValue = contact.get(contactLevelFieldApiName);
+fieldValue = contact.get("custom_field_hash").get(contactLevelFieldApiName);
 json = Map();
 json.put("terms", fieldValue);
 json.put("reason", "Update Terms");
