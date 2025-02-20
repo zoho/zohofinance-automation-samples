@@ -23,6 +23,7 @@ apiUrl = "https://www.zohoapis" + dc + "/books/v3/";
 estimateDetails = zoho.books.getRecordsByID("Estimates", organizationID, estimateID, "zbooks").get("estimate");
 isDiscountBeforeTax = estimateDetails.get("is_discount_before_tax");
 cpList = estimateDetails.get("contact_persons").toList();
+branchId = estimateDetails.get("branch_id");
 estimateNumber = estimateDetails.get("estimate_number");
 discountType = estimateDetails.get("discount_type");
 discount = estimateDetails.get("discount");
@@ -93,7 +94,7 @@ for each estimateField in estimateCustomFields
 json = Map();
 json.put("customer_id", customerID);
 json.put("estimate_id", estimateID);
-
+json.put("branch_id", branchId);
 if(discountType == "entity_level")
 {
 	json.put("discount", discount);
