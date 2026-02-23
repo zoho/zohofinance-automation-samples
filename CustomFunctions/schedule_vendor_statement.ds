@@ -42,7 +42,7 @@ if(getUnpaidbills.size() > 0)
 	start_date = billDate.toString("yyyy-MM-dd");
 	sendst = invokeurl
 	[
-		url :apiUrl + "/contacts/" + vendorID + "/statements/email?start_date=" + start_date + "&end_date=" + end_date + "&organization_id=" + organizationID
+		url :apiUrl + "/contacts/" + vendorID + "/vendorstatements/email?start_date=" + start_date + "&end_date=" + end_date + "&organization_id=" + organizationID
 		type :POST
 		parameters:json
 		connection:"zbooks"
